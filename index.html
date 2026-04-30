@@ -3,58 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rat_Guard Profile</title>
-    <!-- Подключаем скрипт Telegram -->
+    <title>Склад крысы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--tg-theme-bg-color, #1a1a1a);
-            color: var(--tg-theme-text-color, #ffffff);
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             margin: 0;
         }
         .profile-card {
-            background: var(--tg-theme-secondary-bg-color, #2c2c2c);
+            background: #2c2c2c;
             padding: 30px;
             border-radius: 20px;
             width: 85%;
             max-width: 400px;
             text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
             border: 1px solid rgba(255,255,255,0.1);
         }
-        h2 { margin-top: 0; color: var(--tg-theme-button-color, #3498db); }
+        h2 { margin: 0; color: #3498db; font-size: 24px; }
         .points {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: bold;
             color: #f1c40f;
-            margin: 15px 0;
+            margin: 20px 0;
         }
+        .inventory-label { font-size: 14px; color: #aaa; margin-bottom: 5px; }
         .inventory {
-            font-size: 14px;
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
-            border-radius: 10px;
-            min-height: 40px;
-            margin-bottom: 20px;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 12px;
+            min-height: 50px;
+            margin-bottom: 25px;
+            font-size: 15px;
         }
         button {
-            background: var(--tg-theme-button-color, #3498db);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background: #3498db;
+            color: white;
             border: none;
-            padding: 12px 25px;
-            border-radius: 10px;
+            padding: 15px;
+            border-radius: 12px;
             font-weight: bold;
-            cursor: pointer;
             width: 100%;
-            transition: opacity 0.2s;
+            cursor: pointer;
         }
-        button:active { opacity: 0.7; }
     </style>
 </head>
 <body>
@@ -62,42 +59,42 @@
     <div class="profile-card">
         <h2 id="username">Загрузка...</h2>
         <div class="points">🧀 <span id="points">0</span></div>
-        <p>Ваш инвентарь:</p>
+        <div class="inventory-label">Ваш инвентарь:</div>
         <div class="inventory" id="inventory">Загрузка предметов...</div>
-        <button onclick="tg.close()">Закрыть профиль</button>
+        <button onclick="window.Telegram.WebApp.close()">Закрыть профиль</button>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Разворачиваем приложение
+        tg.expand();
 
-        // Получаем данные пользователя из Telegram
         const user = tg.initDataUnsafe?.user;
-        const userId = user?.id || 12345; // 12345 для тестов в браузере
-        const firstName = user?.first_name || "Пользователь";
+        const userId = user?.id || 12345; 
+        const firstName = user?.first_name || "Кирисса";
 
-        document.getElementById('username').innerText = firstName;
-
-        // Функция запроса к твоему API на Render
         async function fetchProfile() {
             try {
-                // Используем твой рабочий URL
-                const response = await fetch(`https://rat-guard-api.onrender.com/get_profile/${userId}`);
-                if (!response.ok) throw new Error('Ошибка сети');
+                // Чистим ID от мусора
+                const cleanId = String(userId).split('&')[0].split('?')[0];
+                const response = await fetch(`https://rat-guard-api.onrender.com/get_profile/${cleanId}`);
+                
+                if (!response.ok) throw new Error('Backend error');
                 
                 const data = await response.json();
                 
-                // Обновляем данные на странице
+                document.getElementById('username').innerText = firstName;
                 document.getElementById('points').innerText = data.points;
-                const inv = data.inventory;
-                document.getElementById('inventory').innerText = inv.length > 0 ? inv.join(', ') : 'Тут пока пусто...';
+                document.getElementById('inventory').innerText = 
+                    data.inventory && data.inventory.length > 0 
+                    ? data.inventory.join(', ') 
+                    : 'Тут пока пусто...';
             } catch (error) {
-                console.error("Ошибка:", error);
-                document.getElementById('inventory').innerText = "Не удалось загрузить данные.";
+                console.error(error);
+                document.getElementById('inventory').innerText = "Ошибка загрузки данных.";
+                document.getElementById('username').innerText = "Упс!";
             }
         }
 
-        // Запускаем загрузку
         fetchProfile();
     </script>
 </body>
