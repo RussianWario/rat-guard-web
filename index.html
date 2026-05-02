@@ -76,9 +76,35 @@
             font-size: 12px; 
             color: #bbb; 
             width: 90%;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             min-height: 20px;
         }
+
+        /* ЛИДЕРБОРД */
+        .leaderboard-section {
+            width: 90%;
+            margin-bottom: 15px;
+            background: #111;
+            border-radius: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .leaderboard-title {
+            font-size: 10px;
+            color: #666;
+            text-align: left;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            padding: 4px 0;
+            border-bottom: 1px solid #222;
+        }
+        .leader-row:last-child { border-bottom: none; }
+        .gold { color: #f1c40f; font-weight: bold; }
 
         #clicker-container {
             width: 100%;
@@ -132,13 +158,20 @@
         <h2 id="username">Загрузка...</h2>
         <div class="points">🧀 <span id="points">0</span></div>
         
-        <!-- ВИЗУАЛ ЭНЕРГИИ -->
         <div class="energy-container">
             <div id="energy-bar"></div>
         </div>
         <div class="energy-text">⚡️ <span id="energy-val">1000</span> / <span id="energy-max">1000</span></div>
 
         <div id="inventory" class="inventory">Инвентарь пуст</div>
+
+        <!-- СЕКЦИЯ ЛИДЕРБОРДА -->
+        <div class="leaderboard-section">
+            <div class="leaderboard-title">Топ банды (141 участник)</div>
+            <div id="leaderboard-list">
+                <div style="font-size: 11px; color: #444;">Синхронизация...</div>
+            </div>
+        </div>
 
         <div id="clicker-container">
             <img src="rat_button.png" alt="Collect Cheese" id="rat-button">
@@ -161,34 +194,45 @@
         const energyVal = document.getElementById('energy-val');
         const ratBtn = document.getElementById('rat-button');
         const animArea = document.getElementById('click-animation-area');
+        const listContainer = document.getElementById('leaderboard-list');
         
         let currentEnergy = 1000;
         let maxEnergy = 1000;
 
-        // 1. Установка имени (Твич пока не трогаем)
         document.getElementById('username').innerText = user?.first_name || "Крыса-тян";
 
-        async function loadProfile() {
+        async function loadData() {
             try {
+                // 1. Загрузка профиля
                 const response = await fetch(`${BACKEND_URL}/get_profile/${userId}?t=${Date.now()}`);
-                if (!response.ok) throw new Error(`Server Error: ${response.status}`);
-                
+                if (!response.ok) throw new Error(`Profile Error: ${response.status}`);
                 const data = await response.json();
                 
                 pointsSpan.innerText = data.points || 0;
                 currentEnergy = data.energy || 0;
                 maxEnergy = data.max_energy || 1000;
-                
                 updateEnergyUI();
 
-                // Безопасная проверка инвентаря (Вариант против .length undefined)
                 const inv = data.inventory;
                 document.getElementById('inventory').innerText = (inv && Array.isArray(inv) && inv.length > 0) 
                     ? inv.join(', ') 
                     : "Инвентарь пуст";
 
+                // 2. Загрузка лидерборда
+                const topRes = await fetch(`${BACKEND_URL}/leaderboard`);
+                const topData = await topRes.json();
+
+                if (topData && Array.isArray(topData)) {
+                    listContainer.innerHTML = '';
+                    topData.slice(0, 5).forEach((player, index) => {
+                        const row = document.createElement('div');
+                        row.className = `leader-row ${index === 0 ? 'gold' : ''}`;
+                        row.innerHTML = `<span>${index + 1}. ${player.username}</span><span>${player.points} 🧀</span>`;
+                        listContainer.appendChild(row);
+                    });
+                }
             } catch (err) {
-                document.getElementById('error-log').innerText = "Load error: " + err.message;
+                document.getElementById('error-log').innerText = "Data error: " + err.message;
             }
         }
 
@@ -198,7 +242,6 @@
             energyBar.style.width = `${percent}%`;
         }
 
-        // Регенерация энергии визуально (раз в секунду)
         setInterval(() => {
             if (currentEnergy < maxEnergy) {
                 currentEnergy = Math.min(maxEnergy, currentEnergy + 2);
@@ -207,9 +250,8 @@
         }, 1000);
 
         async function handleRatClick() {
-            if (currentEnergy < 1) return; // Нет энергии — нет клика
+            if (currentEnergy < 1) return;
 
-            // Оптимистичное обновление (сразу на экране)
             currentEnergy -= 1;
             let pts = parseInt(pointsSpan.innerText);
             pointsSpan.innerText = pts + 1;
@@ -217,14 +259,10 @@
             showClickAnimation();
 
             try {
-                const response = await fetch(`${BACKEND_URL}/click/${userId}`, {
-                    method: 'POST'
-                });
-                
+                const response = await fetch(`${BACKEND_URL}/click/${userId}`, { method: 'POST' });
                 if (!response.ok) throw new Error('Click error');
                 const data = await response.json();
                 
-                // Синхронизация с сервером
                 if (data.points !== undefined) pointsSpan.innerText = data.points;
                 if (data.energy !== undefined) {
                     currentEnergy = data.energy;
@@ -239,15 +277,14 @@
             const plusOne = document.createElement('div');
             plusOne.classList.add('plus-one');
             plusOne.innerText = '+1';
-            const xOffset = Math.random() * 80 - 40;
-            plusOne.style.left = `calc(50% + ${xOffset}px)`;
+            plusOne.style.left = `calc(50% + ${Math.random() * 80 - 40}px)`;
             plusOne.style.top = `40%`; 
             animArea.appendChild(plusOne);
             setTimeout(() => { plusOne.remove(); }, 1000);
         }
 
         ratBtn.addEventListener('click', handleRatClick);
-        loadProfile();
+        loadData();
     </script>
 </body>
 </html>
