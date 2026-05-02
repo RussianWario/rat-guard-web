@@ -164,7 +164,7 @@
         <div id="inventory" class="inventory">Инвентарь пуст</div>
 
         <div class="leaderboard-section">
-            <div class="leaderboard-title">Топ банды (141 участник)</div>
+            <div id="lb-title-dynamic" class="leaderboard-title">Топ банды (синхронизация...)</div>
             <div id="leaderboard-list">
                 <div style="font-size: 11px; color: #444;">Синхронизация...</div>
             </div>
@@ -181,10 +181,9 @@
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
-        tg.expand(); // Разворачиваем на весь экран
+        tg.expand();
 
         const user = tg.initDataUnsafe?.user;
-        // КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Убрали твой личный ID как значение по умолчанию
         const userId = user?.id; 
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
         
@@ -194,6 +193,7 @@
         const ratBtn = document.getElementById('rat-button');
         const animArea = document.getElementById('click-animation-area');
         const listContainer = document.getElementById('leaderboard-list');
+        const lbTitle = document.getElementById('lb-title-dynamic');
         
         let currentEnergy = 1000;
         let maxEnergy = 1000;
@@ -202,18 +202,21 @@
 
         async function loadData() {
             if (!userId) {
-                document.getElementById('error-log').innerText = "Ошибка: Запустите приложение через Telegram бота.";
+                document.getElementById('error-log').innerText = "Ошибка: Запустите через Telegram.";
                 return;
             }
 
             try {
-                const response = await fetch(`${BACKEND_URL}/get_profile/${userId}?t=${Date.now()}`);
+                // 1. Загружаем профиль + передаем имя для регистрации нового аккаунта
+                const firstName = user?.first_name || "Крыса";
+                const response = await fetch(`${BACKEND_URL}/get_profile/${userId}?username=${encodeURIComponent(firstName)}&t=${Date.now()}`);
                 if (!response.ok) throw new Error(`Profile Error: ${response.status}`);
                 const data = await response.json();
                 
                 pointsSpan.innerText = data.points || 0;
                 currentEnergy = data.energy || 0;
                 maxEnergy = data.max_energy || 1000;
+                document.getElementById('energy-max').innerText = maxEnergy;
                 updateEnergyUI();
 
                 const inv = data.inventory;
@@ -221,12 +224,20 @@
                     ? inv.join(', ') 
                     : "Инвентарь пуст";
 
+                // 2. Загружаем лидерборд и общее число участников
                 const topRes = await fetch(`${BACKEND_URL}/leaderboard`);
                 const topData = await topRes.json();
 
-                if (topData && Array.isArray(topData)) {
+                // Обновляем заголовок "Топ банды (X участников)"
+                if (topData.total_count !== undefined) {
+                    lbTitle.innerText = `Топ банды (${topData.total_count} участников)`;
+                }
+
+                // Отрисовываем список
+                const players = topData.users || (Array.isArray(topData) ? topData : []);
+                if (players.length > 0) {
                     listContainer.innerHTML = '';
-                    topData.slice(0, 5).forEach((player, index) => {
+                    players.slice(0, 5).forEach((player, index) => {
                         const row = document.createElement('div');
                         row.className = `leader-row ${index === 0 ? 'gold' : ''}`;
                         row.innerHTML = `<span>${index + 1}. ${player.username}</span><span>${player.points} 🧀</span>`;
@@ -234,7 +245,7 @@
                     });
                 }
             } catch (err) {
-                document.getElementById('error-log').innerText = "Data error: " + err.message;
+                document.getElementById('error-log').innerText = "Ошибка данных: " + err.message;
             }
         }
 
@@ -262,7 +273,6 @@
 
             try {
                 const response = await fetch(`${BACKEND_URL}/click/${userId}`, { method: 'POST' });
-                if (!response.ok) throw new Error('Click error');
                 const data = await response.json();
                 
                 if (data.points !== undefined) pointsSpan.innerText = data.points;
@@ -271,7 +281,7 @@
                     updateEnergyUI();
                 }
             } catch (e) {
-                document.getElementById('error-log').innerText = "Click error: " + e.message;
+                console.error("Click error:", e);
             }
         }
 
