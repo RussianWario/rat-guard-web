@@ -15,10 +15,9 @@
             align-items: center; 
             height: 100vh; 
             margin: 0; 
-            /* Запрещаем выделение текста при кликах */
             -webkit-user-select: none; 
             user-select: none;
-            overflow: hidden; /* Запрещаем скролл всей страницы */
+            overflow: hidden;
         }
         
         .card { 
@@ -35,19 +34,41 @@
             align-items: center;
         }
         
-        h2 { margin-top: 0; margin-bottom: 5px; font-size: 20px; }
+        h2 { margin-top: 0; margin-bottom: 5px; font-size: 20px; color: #f1c40f; }
         
         .points { 
             font-size: 36px; 
             color: #f1c40f; 
-            margin: 5px 0 15px 0; 
+            margin: 5px 0 10px 0; 
             font-weight: bold;
             display: flex;
             align-items: center;
             gap: 10px;
         }
 
-        /* Стиль для элемента инвентаря */
+        /* ЭНЕРГИЯ */
+        .energy-container {
+            width: 90%;
+            background: #333;
+            height: 12px;
+            border-radius: 6px;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+
+        #energy-bar {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f1c40f, #f39c12);
+            transition: width 0.3s ease;
+        }
+
+        .energy-text {
+            font-size: 14px;
+            color: #bbb;
+            margin-bottom: 15px;
+        }
+
         .inventory { 
             background: #111; 
             padding: 8px; 
@@ -59,7 +80,6 @@
             min-height: 20px;
         }
 
-        /* --- СТИЛИ КЛИКЕРА --- */
         #clicker-container {
             width: 100%;
             display: flex;
@@ -69,33 +89,27 @@
             margin-bottom: 10px;
         }
 
-        /* Кнопка-крыса */
         #rat-button {
-            max-width: 85%; /* Чтобы хорошо смотрелось на всех телефонах */
+            max-width: 85%;
             cursor: pointer;
-            transition: transform 0.05s ease-in-out; /* Быстрая реакция */
-            -webkit-tap-highlight-color: transparent; /* Убираем синее выделение */
+            transition: transform 0.05s ease-in-out;
+            -webkit-tap-highlight-color: transparent;
             z-index: 10;
-            display: block; /* Убираем отступы снизу */
+            display: block;
         }
 
-        /* Эффект нажатия (сжатие) */
-        #rat-button:active {
-            transform: scale(0.96); /* Нажатие - сжимаем на 4% */
-        }
+        #rat-button:active { transform: scale(0.96); }
 
-        /* Зона вылетающей анимации "+1" */
         #click-animation-area {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none; /* Чтобы не мешала кликать */
+            pointer-events: none;
             z-index: 20;
         }
 
-        /* Класс для анимации +1 */
         .plus-one {
             position: absolute;
             font-weight: bold;
@@ -115,15 +129,19 @@
 </head>
 <body>
     <div class="card">
-        <h2 id="username">Kawaii Rat...</h2>
+        <h2 id="username">Загрузка...</h2>
         <div class="points">🧀 <span id="points">0</span></div>
-        <div id="inventory" class="inventory">Вещи загружаются...</div>
+        
+        <!-- ВИЗУАЛ ЭНЕРГИИ -->
+        <div class="energy-container">
+            <div id="energy-bar"></div>
+        </div>
+        <div class="energy-text">⚡️ <span id="energy-val">1000</span> / <span id="energy-max">1000</span></div>
 
-        <!-- КОНТЕЙНЕР КЛИКЕРА -->
+        <div id="inventory" class="inventory">Инвентарь пуст</div>
+
         <div id="clicker-container">
-            <!-- Сама картинка-кнопка -->
             <img src="rat_button.png" alt="Collect Cheese" id="rat-button">
-            <!-- Сюда будут вылетать "+1" -->
             <div id="click-animation-area"></div>
         </div>
 
@@ -134,20 +152,22 @@
         const tg = window.Telegram.WebApp;
         tg.ready();
 
-        // Базовые данные пользователя
         const user = tg.initDataUnsafe?.user;
-        const userId = user?.id || 393520953; // Для теста, если нет ТГ
+        const userId = user?.id || 393520953; 
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
         
-        // Элементы
         const pointsSpan = document.getElementById('points');
+        const energyBar = document.getElementById('energy-bar');
+        const energyVal = document.getElementById('energy-val');
         const ratBtn = document.getElementById('rat-button');
         const animArea = document.getElementById('click-animation-area');
         
-        // 1. Устанавливаем имя сразу
+        let currentEnergy = 1000;
+        let maxEnergy = 1000;
+
+        // 1. Установка имени (Твич пока не трогаем)
         document.getElementById('username').innerText = user?.first_name || "Крыса-тян";
 
-        // Функция загрузки профиля при старте
         async function loadProfile() {
             try {
                 const response = await fetch(`${BACKEND_URL}/get_profile/${userId}?t=${Date.now()}`);
@@ -155,26 +175,48 @@
                 
                 const data = await response.json();
                 
-                pointsSpan.innerText = data.points;
+                pointsSpan.innerText = data.points || 0;
+                currentEnergy = data.energy || 0;
+                maxEnergy = data.max_energy || 1000;
                 
+                updateEnergyUI();
+
+                // Безопасная проверка инвентаря (Вариант против .length undefined)
                 const inv = data.inventory;
-                document.getElementById('inventory').innerText = inv.length > 0 ? inv.join(', ') : "Инвентарь пуст";
+                document.getElementById('inventory').innerText = (inv && Array.isArray(inv) && inv.length > 0) 
+                    ? inv.join(', ') 
+                    : "Инвентарь пуст";
+
             } catch (err) {
                 document.getElementById('error-log').innerText = "Load error: " + err.message;
             }
         }
 
-        // --- ЛОГИКА КЛИКА ---
-        async function handleRatClick() {
-            console.log("Клик по крысе!");
-            
-            try {
-                // 1. Показываем +1 визуально сразу ( моментальный отклик)
-                let currentPoints = parseInt(pointsSpan.innerText);
-                pointsSpan.innerText = currentPoints + 1;
-                showClickAnimation();
+        function updateEnergyUI() {
+            energyVal.innerText = currentEnergy;
+            const percent = (currentEnergy / maxEnergy) * 100;
+            energyBar.style.width = `${percent}%`;
+        }
 
-                // 2. Стучимся на бэкенд в файл clicker.py (POST запрос)
+        // Регенерация энергии визуально (раз в секунду)
+        setInterval(() => {
+            if (currentEnergy < maxEnergy) {
+                currentEnergy = Math.min(maxEnergy, currentEnergy + 2);
+                updateEnergyUI();
+            }
+        }, 1000);
+
+        async function handleRatClick() {
+            if (currentEnergy < 1) return; // Нет энергии — нет клика
+
+            // Оптимистичное обновление (сразу на экране)
+            currentEnergy -= 1;
+            let pts = parseInt(pointsSpan.innerText);
+            pointsSpan.innerText = pts + 1;
+            updateEnergyUI();
+            showClickAnimation();
+
+            try {
                 const response = await fetch(`${BACKEND_URL}/click/${userId}`, {
                     method: 'POST'
                 });
@@ -182,41 +224,29 @@
                 if (!response.ok) throw new Error('Click error');
                 const data = await response.json();
                 
-                // 3. Синхронизируем счет с базой данных
-                if (data.points !== undefined) {
-                    pointsSpan.innerText = data.points;
+                // Синхронизация с сервером
+                if (data.points !== undefined) pointsSpan.innerText = data.points;
+                if (data.energy !== undefined) {
+                    currentEnergy = data.energy;
+                    updateEnergyUI();
                 }
             } catch (e) {
-                console.error("Клик не прошел:", e);
                 document.getElementById('error-log').innerText = "Click error: " + e.message;
             }
         }
 
-        // Анимация вылетающих "+1"
         function showClickAnimation() {
             const plusOne = document.createElement('div');
             plusOne.classList.add('plus-one');
             plusOne.innerText = '+1';
-            
-            // Рандомное смещение влево-вправо
-            const xOffset = Math.random() * 80 - 40; // +/- 40px от центра
+            const xOffset = Math.random() * 80 - 40;
             plusOne.style.left = `calc(50% + ${xOffset}px)`;
-            // Стартовая позиция по вертикали
             plusOne.style.top = `40%`; 
-
             animArea.appendChild(plusOne);
-
-            // Удаляем элемент через 1 секунду (после завершения анимации)
-            setTimeout(() => {
-                plusOne.remove();
-            }, 1000);
+            setTimeout(() => { plusOne.remove(); }, 1000);
         }
 
-        // Привязываем функцию клика к крысе
-        // Важно: 'click' в ТГ Mini App работает нормально
         ratBtn.addEventListener('click', handleRatClick);
-
-        // Запускаем загрузку профиля
         loadProfile();
     </script>
 </body>
