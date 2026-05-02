@@ -6,77 +6,49 @@
     <title>Склад крысы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-        .card { background: #1e1e1e; padding: 30px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
-        h2 { margin: 0; color: #3498db; font-size: 24px; }
-        .points { font-size: 48px; font-weight: bold; color: #f1c40f; margin: 20px 0; text-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
-        .label { color: #888; font-size: 14px; margin-bottom: 8px; }
-        .inventory { background: #111; padding: 15px; border-radius: 12px; font-size: 15px; min-height: 50px; border: 1px solid #222; line-height: 1.4; }
-        button { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; margin-top: 25px; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:active { transform: scale(0.98); background: #2980b9; }
-        .debug-info { font-size: 10px; color: #444; margin-top: 10px; }
+        body { font-family: sans-serif; background-color: #121212; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: #1e1e1e; padding: 25px; border-radius: 15px; width: 300px; text-align: center; border: 1px solid #333; }
+        .points { font-size: 40px; color: #f1c40f; margin: 15px 0; }
+        .inventory { background: #111; padding: 10px; border-radius: 10px; font-size: 14px; min-height: 40px; color: #bbb; }
+        button { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; margin-top: 20px; cursor: pointer; }
+        #error-log { color: #e74c3c; font-size: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h2 id="username">Загрузка...</h2>
         <div class="points">🧀 <span id="points">0</span></div>
-        <div class="label">Ваш инвентарь:</div>
-        <div class="inventory" id="inventory">Загрузка предметов...</div>
-        <button onclick="window.Telegram.WebApp.close()">Закрыть профиль</button>
-        <div id="debug" class="debug-info"></div>
+        <div id="inventory" class="inventory">Ищем вещи...</div>
+        <button onclick="window.Telegram.WebApp.close()">Закрыть</button>
+        <div id="error-log"></div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        
-        // Сообщаем Telegram, что приложение готово
         tg.ready();
-        tg.expand();
 
-        async function fetchProfile() {
+        async function loadProfile() {
             const user = tg.initDataUnsafe?.user;
-            // Если мы в браузере (не в телеге), подставим ID 1 для теста
             const userId = user?.id || 1; 
-            const firstName = user?.first_name || "Кирисса";
+            const name = user?.first_name || "Крыса";
             
-            // Вывод для отладки (потом можно убрать)
-            document.getElementById('debug').innerText = `User ID: ${userId}`;
-
-            // Добавляем случайное число, чтобы избежать любого кэширования
-            const apiUrl = `https://rat-guard-api.onrender.com/get_profile/${userId}?nocache=${Math.random()}`;
+            document.getElementById('username').innerText = name;
 
             try {
-                const response = await fetch(apiUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (!response.ok) throw new Error(`Статус: ${response.status}`);
+                // Добавляем timestamp, чтобы браузер не кэшировал ответ
+                const response = await fetch(`https://rat-guard-api.onrender.com/get_profile/${userId}?t=${Date.now()}`);
+                if (!response.ok) throw new Error(`Ошибка сервера: ${response.status}`);
                 
                 const data = await response.json();
-                
-                document.getElementById('username').innerText = firstName;
-                document.getElementById('points').innerText = data.points !== undefined ? data.points : 0;
-                
-                const items = data.inventory;
-                document.getElementById('inventory').innerText = 
-                    Array.isArray(items) && items.length > 0 
-                    ? items.join(', ') 
-                    : 'Тут пока пусто...';
-
-            } catch (e) {
-                console.error("Ошибка:", e);
-                document.getElementById('username').innerText = "Ошибка API";
-                document.getElementById('inventory').innerText = "Не удалось загрузить данные. Попробуй позже.";
+                document.getElementById('points').innerText = data.points;
+                document.getElementById('inventory').innerText = data.inventory.join(', ');
+            } catch (err) {
+                document.getElementById('error-log').innerText = err.message;
+                document.getElementById('inventory').innerText = "Ошибка загрузки данных.";
             }
         }
 
-        // Запускаем через небольшую паузу, чтобы Telegram успел передать данные юзера
-        setTimeout(fetchProfile, 100);
+        loadProfile();
     </script>
 </body>
 </html>
