@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Склад крысы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -14,6 +14,7 @@
         .inventory { background: #111; padding: 15px; border-radius: 12px; font-size: 15px; min-height: 50px; border: 1px solid #222; line-height: 1.4; }
         button { background: #3498db; color: white; border: none; padding: 12px; width: 100%; border-radius: 10px; margin-top: 25px; font-weight: bold; cursor: pointer; transition: 0.2s; }
         button:active { transform: scale(0.98); background: #2980b9; }
+        .debug-info { font-size: 10px; color: #444; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -23,24 +24,38 @@
         <div class="label">Ваш инвентарь:</div>
         <div class="inventory" id="inventory">Загрузка предметов...</div>
         <button onclick="window.Telegram.WebApp.close()">Закрыть профиль</button>
+        <div id="debug" class="debug-info"></div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        
+        // Сообщаем Telegram, что приложение готово
         tg.ready();
+        tg.expand();
 
         async function fetchProfile() {
             const user = tg.initDataUnsafe?.user;
-            const userId = user?.id || 12345;
+            // Если мы в браузере (не в телеге), подставим ID 1 для теста
+            const userId = user?.id || 1; 
             const firstName = user?.first_name || "Кирисса";
+            
+            // Вывод для отладки (потом можно убрать)
+            document.getElementById('debug').innerText = `User ID: ${userId}`;
 
-            // Метка времени ?t= нужна, чтобы Telegram не кешировал пустую страницу
-            const apiUrl = `https://rat-guard-api.onrender.com/get_profile/${userId}?t=${Date.now()}`;
+            // Добавляем случайное число, чтобы избежать любого кэширования
+            const apiUrl = `https://rat-guard-api.onrender.com/get_profile/${userId}?nocache=${Math.random()}`;
 
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error('Ошибка сервера');
+                const response = await fetch(apiUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) throw new Error(`Статус: ${response.status}`);
                 
                 const data = await response.json();
                 
@@ -54,13 +69,14 @@
                     : 'Тут пока пусто...';
 
             } catch (e) {
-                console.error(e);
-                document.getElementById('username').innerText = "Ошибка";
-                document.getElementById('inventory').innerText = "Сервер не отвечает. Проверь логи в Render!";
+                console.error("Ошибка:", e);
+                document.getElementById('username').innerText = "Ошибка API";
+                document.getElementById('inventory').innerText = "Не удалось загрузить данные. Попробуй позже.";
             }
         }
 
-        fetchProfile();
+        // Запускаем через небольшую паузу, чтобы Telegram успел передать данные юзера
+        setTimeout(fetchProfile, 100);
     </script>
 </body>
 </html>
