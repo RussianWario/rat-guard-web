@@ -6,7 +6,7 @@
     <title>Склад крысы</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #121212; color: #ffffff; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
         .card { background: #1e1e1e; padding: 30px; border-radius: 20px; width: 320px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid #333; }
         h2 { margin: 0; color: #3498db; font-size: 24px; }
         .points { font-size: 48px; font-weight: bold; color: #f1c40f; margin: 20px 0; text-shadow: 0 0 10px rgba(241, 196, 15, 0.3); }
@@ -32,20 +32,20 @@
 
         async function fetchProfile() {
             const user = tg.initDataUnsafe?.user;
-            // Если мы в телеге — берем реальный ID, если нет — тестовый 12345
             const userId = user?.id || 12345;
             const firstName = user?.first_name || "Кирисса";
 
+            // Метка времени ?t= нужна, чтобы Telegram не кешировал пустую страницу
+            const apiUrl = `https://rat-guard-api.onrender.com/get_profile/${userId}?t=${Date.now()}`;
+
             try {
-                // ВАЖНО: Адрес твоего бэкенда на Render
-                const response = await fetch(`https://rat-guard-api.onrender.com/get_profile/${userId}`);
-                
+                const response = await fetch(apiUrl);
                 if (!response.ok) throw new Error('Ошибка сервера');
                 
                 const data = await response.json();
                 
                 document.getElementById('username').innerText = firstName;
-                document.getElementById('points').innerText = data.points || 0;
+                document.getElementById('points').innerText = data.points !== undefined ? data.points : 0;
                 
                 const items = data.inventory;
                 document.getElementById('inventory').innerText = 
@@ -56,7 +56,7 @@
             } catch (e) {
                 console.error(e);
                 document.getElementById('username').innerText = "Ошибка";
-                document.getElementById('inventory').innerText = "Не удалось связаться с сервером.";
+                document.getElementById('inventory').innerText = "Сервер не отвечает. Проверь логи в Render!";
             }
         }
 
