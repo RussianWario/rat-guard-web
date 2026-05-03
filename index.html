@@ -86,7 +86,7 @@
         /* Специальная широкая кнопка для кликера */
         .main-btn { grid-column: span 2; background: linear-gradient(145deg, #2c2c2c, #1e1e1e); border: 1px solid #444; }
 
-        /* Секция новостей/событий */
+        /* Секция новостей */
         .news-banner {
             width: 90%;
             background: #2ecc71;
@@ -99,7 +99,7 @@
             font-size: 14px;
         }
 
-        #error-log { color: #e74c3c; font-size: 12px; padding: 10px; }
+        #error-log { color: #e74c3c; font-size: 12px; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
@@ -120,7 +120,6 @@
     </div>
 
     <div class="menu-grid">
-        <!-- Главная кнопка входа в игру -->
         <div class="menu-item main-btn" onclick="openModule('clicker.html')">
             <span>🖱️ В ОБОРОНУ (КЛИКЕР)</span>
             <div class="desc">Защищай склады и собирай сыр</div>
@@ -128,7 +127,7 @@
 
         <div class="menu-item" onclick="openModule('leaderboard.html')">
             <span>🏆 ТОП БАНДЫ</span>
-            <div class="desc">141 участник</div>
+            <div class="desc">Посмотреть лидеров</div>
         </div>
 
         <div class="menu-item" onclick="alert('Скоро: Колесо Фортуны!')">
@@ -155,32 +154,46 @@
         tg.expand();
         tg.headerColor = '#1e1e1e';
 
+        // Прячем кнопку назад, так как это главный экран
+        if (tg.BackButton) tg.BackButton.hide();
+
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
-        // Отображение данных пользователя
+        // Первичная настройка UI из данных TG
         if (user) {
             document.getElementById('username').innerText = user.first_name;
             document.getElementById('avatar-letter').innerText = user.first_name.charAt(0);
+        } else {
+            document.getElementById('error-log').innerText = "Ошибка: откройте приложение через Telegram";
         }
 
         async function fetchGlobalData() {
             if (!user?.id) return;
             try {
-                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.first_name)}`);
+                // t=Date.now() убивает кэш, username=... создает юзера в базе, если его там нет
+                const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.first_name)}&t=${Date.now()}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error("Ошибка сервера: " + response.status);
+                
                 const data = await response.json();
-                document.getElementById('global-points').innerText = data.points || 0;
+                
+                // Обновляем баланс на главной из базы данных
+                if (data.points !== undefined) {
+                    document.getElementById('global-points').innerText = data.points;
+                }
             } catch (e) {
-                console.error("Ошибка загрузки данных профиля");
+                console.error("Ошибка API:", e);
+                document.getElementById('error-log').innerText = "Проблема с подключением к Крысиному Логову";
             }
         }
 
         function openModule(url) {
-            // В будущем здесь можно сделать плавный переход через скрытие/показ div-ов,
-            // но пока просто перенаправляем на страницу модуля
             window.location.href = url;
         }
 
+        // Запуск при загрузке
         fetchGlobalData();
     </script>
 </body>
