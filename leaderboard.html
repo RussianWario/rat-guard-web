@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Лидерборд Крыс</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #121212;
+            color: white;
+            margin: 0;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        .leader-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .leader-item {
+            background: #1e1e1e;
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #333;
+        }
+        .rank {
+            font-weight: bold;
+            color: #f1c40f;
+            margin-right: 10px;
+            width: 25px;
+        }
+        .name { flex-grow: 1; font-weight: 500; }
+        .score { font-weight: bold; color: #2ecc71; }
+        #total-users { font-size: 12px; color: #bbb; }
+        .error-msg { color: #e74c3c; text-align: center; margin-top: 50px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2 style="margin: 0;">🏆 Топ Банды</h2>
+        <div id="total-users">Участников: ...</div>
+    </div>
+
+    <div id="leader-list" class="leader-list">
+        <!-- Сюда попадут игроки из базы -->
+        <div style="text-align: center; color: #777;">Ищем крыс в базе...</div>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        
+        // Показываем кнопку назад
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => {
+            window.location.href = 'index.html';
+        });
+
+        const BACKEND_URL = 'https://rat-guard-api.onrender.com';
+
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch(`${BACKEND_URL}/leaderboard`);
+                if (!response.ok) throw new Error("Ошибка загрузки");
+                
+                const data = await response.json();
+                
+                // Обновляем счетчик
+                document.getElementById('total-users').innerText = `Участников: ${data.total_count}`;
+                
+                const listContainer = document.getElementById('leader-list');
+                listContainer.innerHTML = '';
+
+                if (data.users.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align:center;">Список пуст</div>';
+                    return;
+                }
+
+                data.users.forEach((user, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'leader-item';
+                    
+                    // Если это сам игрок, можно подсветить (опционально)
+                    item.innerHTML = `
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name">${user.username}</span>
+                        <span class="score">${user.points.toLocaleString()} 🧀</span>
+                    `;
+                    listContainer.appendChild(item);
+                });
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById('leader-list').innerHTML = 
+                    '<div class="error-msg">Не удалось связаться с Логовом. Проверь интернет или подожди просыпания сервера.</div>';
+            }
+        }
+
+        loadLeaderboard();
+    </script>
+</body>
+</html>
