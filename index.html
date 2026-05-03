@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rat Guard Hub</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #f1c40f;
+            --text-main: #ffffff;
+            --text-dim: #bbb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Шапка с профилем */
+        .header {
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            border-bottom: 1px solid #333;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 40px; height: 40px; background: #3498db; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; }
+        
+        .balance-pill {
+            background: #111;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-weight: bold;
+        }
+
+        /* Сетка меню */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+            max-width: 500px;
+        }
+
+        .menu-item {
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.2s, border-color 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:active { transform: scale(0.95); border-color: var(--accent-color); }
+        .menu-item i { font-size: 30px; }
+        .menu-item span { font-weight: bold; font-size: 14px; }
+        .menu-item .desc { font-size: 10px; color: var(--text-dim); }
+
+        /* Специальная широкая кнопка для кликера */
+        .main-btn { grid-column: span 2; background: linear-gradient(145deg, #2c2c2c, #1e1e1e); border: 1px solid #444; }
+
+        /* Секция новостей/событий */
+        .news-banner {
+            width: 90%;
+            background: #2ecc71;
+            color: black;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        #error-log { color: #e74c3c; font-size: 12px; padding: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="user-info">
+            <div class="user-avatar" id="avatar-letter">?</div>
+            <div>
+                <div id="username" style="font-weight: bold;">Загрузка...</div>
+                <div style="font-size: 10px; color: var(--text-dim);">Ранг: Обычная крыса</div>
+            </div>
+        </div>
+        <div class="balance-pill">🧀 <span id="global-points">0</span></div>
+    </div>
+
+    <div class="news-banner">
+        🔥 Раздача 27,950 VP скоро начнется!
+    </div>
+
+    <div class="menu-grid">
+        <!-- Главная кнопка входа в игру -->
+        <div class="menu-item main-btn" onclick="openModule('clicker.html')">
+            <span>🖱️ В ОБОРОНУ (КЛИКЕР)</span>
+            <div class="desc">Защищай склады и собирай сыр</div>
+        </div>
+
+        <div class="menu-item" onclick="openModule('leaderboard.html')">
+            <span>🏆 ТОП БАНДЫ</span>
+            <div class="desc">141 участник</div>
+        </div>
+
+        <div class="menu-item" onclick="alert('Скоро: Колесо Фортуны!')">
+            <span>🎡 КОЛЕСО УДАЧИ</span>
+            <div class="desc">Испытай везение</div>
+        </div>
+
+        <div class="menu-item" onclick="alert('Скоро: Магазин улучшений!')">
+            <span>🛒 МАГАЗИН</span>
+            <div class="desc">Бусты и скины</div>
+        </div>
+
+        <div class="menu-item" onclick="alert('Скоро: Задания!')">
+            <span>📅 КВЕСТЫ</span>
+            <div class="desc">+500 🧀 ежедневно</div>
+        </div>
+    </div>
+
+    <div id="error-log"></div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
+        tg.headerColor = '#1e1e1e';
+
+        const user = tg.initDataUnsafe?.user;
+        const BACKEND_URL = 'https://rat-guard-api.onrender.com';
+
+        // Отображение данных пользователя
+        if (user) {
+            document.getElementById('username').innerText = user.first_name;
+            document.getElementById('avatar-letter').innerText = user.first_name.charAt(0);
+        }
+
+        async function fetchGlobalData() {
+            if (!user?.id) return;
+            try {
+                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.first_name)}`);
+                const data = await response.json();
+                document.getElementById('global-points').innerText = data.points || 0;
+            } catch (e) {
+                console.error("Ошибка загрузки данных профиля");
+            }
+        }
+
+        function openModule(url) {
+            // В будущем здесь можно сделать плавный переход через скрытие/показ div-ов,
+            // но пока просто перенаправляем на страницу модуля
+            window.location.href = url;
+        }
+
+        fetchGlobalData();
+    </script>
+</body>
+</html>
