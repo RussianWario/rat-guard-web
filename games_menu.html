@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rat Games</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --bg-color: #121212; --card-bg: #1e1e1e; --accent-color: #f1c40f; --text-main: #ffffff; }
+        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .game-card {
+            width: 100%; max-width: 400px; background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 15px;
+            display: flex; align-items: center; gap: 15px; border: 1px solid #333; cursor: pointer;
+        }
+        .game-card:active { transform: scale(0.98); border-color: var(--accent-color); }
+        .game-icon { font-size: 40px; }
+        .game-info b { display: block; font-size: 18px; margin-bottom: 5px; }
+        .game-info span { font-size: 12px; color: #bbb; }
+    </style>
+</head>
+<body>
+    <h2 style="color: var(--accent-color);">Выбирай игру, Гвардеец</h2>
+
+    <!-- Кнопка КЛИКЕРА -->
+    <div class="game-card" onclick="location.href='clicker.html'">
+        <div class="game-icon">🖱️</div>
+        <div class="game-info">
+            <b>Сырный Кликер</b>
+            <span>Кликай и защищай склады kirisaa</span>
+        </div>
+    </div>
+
+    <!-- Будущее КОЛЕСО -->
+    <div class="game-card" style="opacity: 0.6;" onclick="alert('Скоро!')">
+        <div class="game-icon">🎡</div>
+        <div class="game-info">
+            <b>Колесо Фортуны</b>
+            <span>Испытай удачу (В разработке)</span>
+        </div>
+    </div>
+
+    <button onclick="location.href='index.html'" style="margin-top: 20px; background: none; border: 1px solid #555; color: white; padding: 10px 20px; border-radius: 10px;">Назад в Хаб</button>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.BackButton.show();
+        tg.BackButton.onClick(() => { window.location.href = 'index.html'; });
+    </script>
+</body>
+</html>
