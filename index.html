@@ -26,7 +26,6 @@
             overflow-x: hidden;
         }
 
-        /* Шапка с профилем */
         .header {
             width: 100%;
             padding: 15px 20px;
@@ -43,7 +42,6 @@
 
         .user-info { display: flex; align-items: center; gap: 12px; }
         
-        /* ОБНОВЛЕННЫЙ СТИЛЬ АВАТАРКИ */
         .user-avatar-container {
             width: 45px;
             height: 45px;
@@ -51,24 +49,12 @@
         }
 
         .user-avatar { 
-            width: 100%; 
-            height: 100%; 
-            background: #3498db; 
-            border-radius: 50%; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            font-weight: bold; 
-            overflow: hidden;
-            border: 2px solid var(--accent-color);
-            object-fit: cover;
+            width: 100%; height: 100%; background: #3498db; border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center; 
+            font-weight: bold; overflow: hidden; border: 2px solid var(--accent-color);
         }
 
-        .user-avatar img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+        .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
         
         .balance-pill {
             background: #111;
@@ -77,16 +63,13 @@
             border: 1px solid var(--accent-color);
             color: var(--accent-color);
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            display: flex; align-items: center; gap: 5px;
         }
 
-        /* Сетка меню */
         .menu-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            gap: 12px;
             padding: 20px;
             width: 100%;
             box-sizing: border-box;
@@ -97,30 +80,29 @@
             background: var(--card-bg);
             border: 1px solid #333;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px;
             text-align: center;
             transition: transform 0.1s, border-color 0.2s;
             cursor: pointer;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         .menu-item:active { transform: scale(0.95); border-color: var(--accent-color); }
-        .menu-item i { font-size: 30px; }
-        .menu-item span { font-weight: bold; font-size: 14px; }
-        .menu-item .desc { font-size: 10px; color: var(--text-dim); }
+        .menu-item span { font-weight: bold; font-size: 13px; text-transform: uppercase; }
+        .menu-item .desc { font-size: 9px; color: var(--text-dim); }
 
-        /* Специальная широкая кнопка для кликера */
+        /* Кнопка КЛИКЕРА (Акцент на геймплей) */
         .main-btn { 
             grid-column: span 2; 
             background: linear-gradient(145deg, #2c2c2c, #1e1e1e); 
-            border: 1px solid #444;
+            border: 1px solid var(--accent-color);
             padding: 25px;
+            margin-bottom: 5px;
         }
 
-        /* Секция новостей */
         .news-banner {
             width: calc(100% - 40px);
             max-width: 460px;
@@ -132,7 +114,6 @@
             font-weight: bold;
             text-align: center;
             font-size: 13px;
-            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.2);
         }
 
         #error-log { color: #e74c3c; font-size: 12px; padding: 10px; text-align: center; }
@@ -158,29 +139,34 @@
     </div>
 
     <div class="menu-grid">
+        <!-- КЛИКЕР ОТДЕЛЬНО -->
         <div class="menu-item main-btn" onclick="openModule('clicker.html')">
-            <span>🖱️ В ОБОРОНУ (КЛИКЕР)</span>
+            <span style="font-size: 16px;">🖱️ В ОБОРОНУ (КЛИКЕР)</span>
             <div class="desc">Защищай склады и собирай сыр</div>
         </div>
 
-        <div class="menu-item" onclick="openModule('leaderboard.html')">
-            <span>🏆 ТОП БАНДЫ</span>
-            <div class="desc">Посмотреть лидеров</div>
-        </div>
-
+        <!-- КОЛЕСО -->
         <div class="menu-item" onclick="alert('Скоро: Колесо Фортуны!')">
             <span>🎡 КОЛЕСО УДАЧИ</span>
             <div class="desc">Испытай везение</div>
         </div>
 
-        <div class="menu-item" onclick="alert('Скоро: Магазин улучшений!')">
-            <span>🛒 МАГАЗИН</span>
-            <div class="desc">Бусты и скины</div>
-        </div>
-
+        <!-- КВЕСТЫ -->
         <div class="menu-item" onclick="alert('Скоро: Задания!')">
             <span>📅 КВЕСТЫ</span>
-            <div class="desc">+500 🧀 ежедневно</div>
+            <div class="desc">Ежедневные награды</div>
+        </div>
+
+        <!-- ТОП -->
+        <div class="menu-item" onclick="openModule('leaderboard.html')">
+            <span>🏆 ТОП БАНДЫ</span>
+            <div class="desc">Лидеры Логова</div>
+        </div>
+
+        <!-- МАГАЗИН -->
+        <div class="menu-item" onclick="alert('Скоро: Магазин!')">
+            <span>🛒 МАГАЗИН</span>
+            <div class="desc">Бусты и скины</div>
         </div>
     </div>
 
@@ -197,7 +183,6 @@
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
-        // Имя берем из TG сразу
         if (user) {
             document.getElementById('username').innerText = user.username || user.first_name;
         }
@@ -205,35 +190,24 @@
         async function fetchGlobalData() {
             if (!user?.id) return;
             try {
-                // Отправляем запрос на бэкенд, который теперь умеет доставать аватарки
                 const displayName = user.username || user.first_name;
                 const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(displayName)}&t=${Date.now()}`;
                 const response = await fetch(url);
-                
-                if (!response.ok) throw new Error("Ошибка сервера: " + response.status);
-                
                 const data = await response.json();
                 
-                // 1. Обновляем баланс
                 if (data.points !== undefined) {
                     document.getElementById('global-points').innerText = data.points;
                 }
 
-                // 2. Логика отображения аватарки
                 const avatarContent = document.getElementById('user-avatar-content');
                 if (data.avatar_url) {
-                    // Если бэкенд прислал ссылку на фото — ставим картинку
                     avatarContent.innerHTML = `<img src="${data.avatar_url}" alt="ava">`;
                     avatarContent.style.background = "transparent";
                 } else {
-                    // Иначе оставляем первую букву имени
                     avatarContent.innerText = (user.first_name || "К").charAt(0).toUpperCase();
                 }
-
             } catch (e) {
                 console.error("Ошибка API:", e);
-                document.getElementById('error-log').innerText = "Проблема с подключением к Крысиному Логову";
-                // Заглушка на случай ошибки
                 document.getElementById('user-avatar-content').innerText = (user.first_name || "К").charAt(0).toUpperCase();
             }
         }
