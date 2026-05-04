@@ -6,45 +6,143 @@
     <title>Rat Games</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg-color: #121212; --card-bg: #1e1e1e; --accent-color: #f1c40f; --text-main: #ffffff; }
-        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .game-card {
-            width: 100%; max-width: 400px; background: var(--card-bg); border-radius: 15px; padding: 20px; margin-bottom: 15px;
-            display: flex; align-items: center; gap: 15px; border: 1px solid #333; cursor: pointer;
+        :root { 
+            --bg-color: #0f0f0f; 
+            --card-bg: #1a1a1a; 
+            --accent-color: #f1c40f; 
+            --text-main: #ffffff; 
+            --text-dim: #888;
         }
-        .game-card:active { transform: scale(0.98); border-color: var(--accent-color); }
-        .game-icon { font-size: 40px; }
-        .game-info b { display: block; font-size: 18px; margin-bottom: 5px; }
-        .game-info span { font-size: 12px; color: #bbb; }
+        
+        body { 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        .title {
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+            font-size: 20px;
+        }
+
+        .game-card {
+            width: 100%; 
+            max-width: 400px; 
+            background: var(--card-bg); 
+            border-radius: 18px; 
+            padding: 20px; 
+            margin-bottom: 12px;
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border: 1px solid #222; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .game-card:active { 
+            transform: scale(0.97); 
+            border-color: var(--accent-color); 
+        }
+
+        .game-icon { 
+            font-size: 35px; 
+            background: #111;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .game-info { flex-grow: 1; }
+        .game-info b { display: block; font-size: 17px; margin-bottom: 4px; }
+        .game-info span { font-size: 11px; color: var(--text-dim); line-height: 1.3; display: block; }
+
+        /* Стиль для заблокированных игр */
+        .locked { opacity: 0.5; cursor: default; }
+        .locked:active { transform: none; border-color: #222; }
+        .status-badge {
+            font-size: 9px;
+            background: #333;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .back-btn {
+            margin-top: 20px;
+            background: none;
+            border: 1px solid #333;
+            color: var(--text-dim);
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 14px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h2 style="color: var(--accent-color);">Выбирай игру, Гвардеец</h2>
 
-    <!-- Кнопка КЛИКЕРА -->
+    <h2 class="title">Мини-игры</h2>
+
+    <!-- КЛИКЕР -->
     <div class="game-card" onclick="location.href='clicker.html'">
         <div class="game-icon">🖱️</div>
         <div class="game-info">
             <b>Сырный Кликер</b>
-            <span>Кликай и защищай склады kirisaa</span>
+            <span>Защищай склады и собирай запасы</span>
         </div>
     </div>
 
-    <!-- Будущее КОЛЕСО -->
-    <div class="game-card" style="opacity: 0.6;" onclick="alert('Скоро!')">
-        <div class="game-icon">🎡</div>
+    <!-- САПЕР -->
+    <div class="game-card locked" onclick="tg.HapticFeedback.notificationOccurred('warning')">
+        <div class="game-icon">💣</div>
         <div class="game-info">
-            <b>Колесо Фортуны</b>
-            <span>Испытай удачу (В разработке)</span>
+            <b>Сырный Сапер</b>
+            <span>Найди деликатес и не подорвись</span>
+            <div class="status-badge">В РАЗРАБОТКЕ</div>
         </div>
     </div>
 
-    <button onclick="location.href='index.html'" style="margin-top: 20px; background: none; border: 1px solid #555; color: white; padding: 10px 20px; border-radius: 10px;">Назад в Хаб</button>
+    <!-- БАШНЯ -->
+    <div class="game-card locked" onclick="tg.HapticFeedback.notificationOccurred('warning')">
+        <div class="game-icon">🏢</div>
+        <div class="game-info">
+            <b>Сырная Башня</b>
+            <span>Строй вертикальное Крысиное Логово</span>
+            <div class="status-badge">В РАЗРАБОТКЕ</div>
+        </div>
+    </div>
+
+    <button class="back-btn" onclick="location.href='index.html'">← В главное меню</button>
 
     <script>
         const tg = window.Telegram.WebApp;
+        tg.ready();
+        
+        // Показываем кнопку «Назад» в интерфейсе Telegram
         tg.BackButton.show();
-        tg.BackButton.onClick(() => { window.location.href = 'index.html'; });
+        tg.BackButton.onClick(() => { 
+            window.location.href = 'index.html'; 
+        });
+
+        // Добавим легкую вибрацию при клике на работающую игру
+        document.querySelector('.game-card:not(.locked)').addEventListener('click', () => {
+            tg.HapticFeedback.impactOccurred('medium');
+        });
     </script>
 </body>
 </html>
