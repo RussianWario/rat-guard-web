@@ -25,6 +25,8 @@
             align-items: center;
             min-height: 100vh;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .header {
@@ -43,7 +45,7 @@
             width: 35px; height: 35px; border-radius: 50%; 
             border: 2px solid var(--accent-color); overflow: hidden; 
             display: flex; align-items: center; justify-content: center;
-            background: #333; font-weight: bold;
+            background: #333; font-weight: bold; font-size: 14px;
         }
         .user-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
@@ -106,7 +108,7 @@
             text-transform: uppercase;
             box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
             cursor: pointer;
-            transition: transform 0.1s;
+            transition: transform 0.1s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -133,12 +135,12 @@
             gap: 4px;
             border: 1px solid #333;
             cursor: pointer;
+            transition: all 0.1s ease;
         }
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
-        .nav-item:active { border-color: var(--accent-color); background: #222; }
+        .nav-item:active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
 
-        /* КНОПКА ВЫХОДА */
         .exit-btn {
             margin-bottom: 20px;
             color: #555;
@@ -190,20 +192,22 @@
         </div>
     </div>
 
-    <!-- Кнопка выхода -->
     <div class="exit-btn" onclick="tg.close()">Выйти из хаба</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
-        tg.headerColor = '#1a1a1a';
+        tg.setHeaderColor('#1a1a1a');
+        tg.setBackgroundColor('#0f0f0f');
 
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
+        // Первичная настройка данных пользователя
         if (user) {
             document.getElementById('username').innerText = user.username || user.first_name;
+            document.getElementById('user-avatar-content').innerText = (user.first_name || "K").charAt(0).toUpperCase();
         }
 
         async function fetchGlobalData() {
@@ -212,17 +216,27 @@
                 const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.username || user.first_name)}&t=${Date.now()}`;
                 const response = await fetch(url);
                 const data = await response.json();
-                if (data.points !== undefined) document.getElementById('global-points').innerText = data.points;
+                
+                if (data.points !== undefined) {
+                    // Форматируем число (добавляем пробелы)
+                    document.getElementById('global-points').innerText = Math.floor(data.points).toLocaleString();
+                }
+                
                 const avatarContent = document.getElementById('user-avatar-content');
                 if (data.avatar_url) {
-                    avatarContent.innerHTML = `<img src="${data.avatar_url}" alt="ava">`;
-                } else {
-                    avatarContent.innerText = (user.first_name || "К").charAt(0).toUpperCase();
+                    avatarContent.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="this.style.display='none'">`;
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { 
+                console.error("Ошибка загрузки данных:", e); 
+            }
         }
 
-        function openModule(url) { window.location.href = url; }
+        function openModule(url) {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            window.location.href = url;
+        }
+
+        // Запуск
         fetchGlobalData();
     </script>
 </body>
