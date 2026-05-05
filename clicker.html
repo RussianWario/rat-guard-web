@@ -34,7 +34,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center; /* Центрируем всё, раз энергии нет */
+            justify-content: center;
             padding: 30px 20px;
             box-sizing: border-box;
             gap: 40px;
@@ -59,7 +59,6 @@
             text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
         }
 
-        /* КЛИКЕР-ЗОНА */
         #clicker-container {
             position: relative;
             width: 300px;
@@ -80,7 +79,6 @@
 
         #rat-button:active { transform: scale(0.90); }
 
-        /* АНИМАЦИЯ КЛИКА */
         #click-animation-area {
             position: absolute;
             width: 100%;
@@ -110,6 +108,26 @@
             font-size: 12px;
             text-transform: uppercase;
             font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        /* КНОПКА ВЫХОДА */
+        .exit-button {
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid #333;
+            padding: 10px 25px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .exit-button:active {
+            background: #222;
+            transform: scale(0.95);
         }
     </style>
 </head>
@@ -128,6 +146,9 @@
         </div>
 
         <div class="footer-hint">Тапай без остановки!</div>
+        
+        <!-- Добавлена визуальная кнопка выхода -->
+        <button class="exit-button" onclick="goToMenu()">🔙 В ИГРОВУЮ ЗОНУ</button>
     </div>
 
     <script>
@@ -136,10 +157,16 @@
         tg.expand();
         tg.setHeaderColor('#0f0f0f');
 
+        // Логика кнопки «Назад» в Telegram
         tg.BackButton.show();
         tg.BackButton.onClick(() => {
-            window.location.href = 'games_menu.html';
+            goToMenu();
         });
+
+        function goToMenu() {
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+            window.location.href = 'games_menu.html';
+        }
 
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
         const user = tg.initDataUnsafe?.user;
@@ -163,15 +190,12 @@
         }
 
         async function handleTap(e) {
-            // Оптимистичный апдейт счета
             let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, ''));
             pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
             
-            // Эффекты
             spawnCheese(e);
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
-            // Отправка на бэк (энергия больше не проверяется)
             try {
                 const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { method: 'POST' });
                 const data = await res.json();
@@ -190,8 +214,8 @@
             plus.innerText = '🧀';
             
             const rect = area.getBoundingClientRect();
-            const x = e.clientX ? (e.clientX - rect.left) : (rect.width / 2);
-            const y = e.clientY ? (e.clientY - rect.top) : (rect.height / 2);
+            const x = (e.clientX || e.pageX) ? ( (e.clientX || e.pageX) - rect.left) : (rect.width / 2);
+            const y = (e.clientY || e.pageY) ? ( (e.clientY || e.pageY) - rect.top) : (rect.height / 2);
 
             plus.style.left = `${x - 15}px`;
             plus.style.top = `${y - 15}px`;
