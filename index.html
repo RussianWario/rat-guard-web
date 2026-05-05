@@ -204,7 +204,7 @@
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
-        // Первичная настройка данных пользователя
+        // Первичная установка (заглушка до ответа сервера)
         if (user) {
             document.getElementById('username').innerText = user.username || user.first_name;
             document.getElementById('user-avatar-content').innerText = (user.first_name || "K").charAt(0).toUpperCase();
@@ -213,21 +213,23 @@
         async function fetchGlobalData() {
             if (!user?.id) return;
             try {
+                // Добавляем timestamp (t=...), чтобы браузер не кэшировал данные профиля
                 const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.username || user.first_name)}&t=${Date.now()}`;
                 const response = await fetch(url);
                 const data = await response.json();
                 
                 if (data.points !== undefined) {
-                    // Форматируем число (добавляем пробелы)
-                    document.getElementById('global-points').innerText = Math.floor(data.points).toLocaleString();
+                    // Форматируем число (например: 1 250 000)
+                    document.getElementById('global-points').innerText = Math.floor(data.points).toLocaleString('ru-RU');
                 }
                 
-                const avatarContent = document.getElementById('user-avatar-content');
+                // Обработка аватара
+                const avatarDiv = document.getElementById('user-avatar-content');
                 if (data.avatar_url) {
-                    avatarContent.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="this.style.display='none'">`;
+                    avatarDiv.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="this.innerHTML='${(user.first_name || "K").charAt(0).toUpperCase()}'">`;
                 }
             } catch (e) { 
-                console.error("Ошибка загрузки данных:", e); 
+                console.error("Ошибка API:", e); 
             }
         }
 
@@ -236,8 +238,11 @@
             window.location.href = url;
         }
 
-        // Запуск
+        // Запуск загрузки
         fetchGlobalData();
+
+        // Обновляем данные раз в 30 секунд, пока пользователь в Хабе
+        setInterval(fetchGlobalData, 30000);
     </script>
 </body>
 </html>
