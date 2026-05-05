@@ -166,6 +166,7 @@
 
     <div class="character-section">
         <div class="character-container">
+            <!-- Можно менять ссылку на любого персонажа-крысу -->
             <img src="https://img.icons8.com/isometric/200/rat.png" alt="Hero"> 
         </div>
         <p style="color: var(--text-dim); font-size: 11px; margin-top: 15px;">Статус: Охраняю склады</p>
@@ -173,12 +174,12 @@
 
     <div class="games-btn-container">
         <div class="games-main-btn" onclick="openModule('games_menu.html')">
-            <span>🕹️</span> МИНИ-ИГРЫ
+            <span>🕹️</span> КЛИКЕР
         </div>
     </div>
 
     <div class="bottom-grid">
-        <div class="nav-item" onclick="alert('Скоро!')">
+        <div class="nav-item" onclick="alert('Квесты в разработке!')">
             <i>📅</i><span>КВЕСТЫ</span>
         </div>
         <div class="nav-item" onclick="alert('Скоро!')">
@@ -187,7 +188,7 @@
         <div class="nav-item" onclick="openModule('leaderboard.html')">
             <i>🏆</i><span>ТОП</span>
         </div>
-        <div class="nav-item" onclick="alert('Скоро!')">
+        <div class="nav-item" onclick="alert('Магазин откроется позже!')">
             <i>🛒</i><span>МАГАЗИН</span>
         </div>
     </div>
@@ -204,7 +205,7 @@
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
-        // Первичная установка (заглушка до ответа сервера)
+        // Первичная настройка интерфейса
         if (user) {
             document.getElementById('username').innerText = user.username || user.first_name;
             document.getElementById('user-avatar-content').innerText = (user.first_name || "K").charAt(0).toUpperCase();
@@ -213,35 +214,40 @@
         async function fetchGlobalData() {
             if (!user?.id) return;
             try {
-                // Добавляем timestamp (t=...), чтобы браузер не кэшировал данные профиля
+                // Добавляем timestamp для обхода кэша и корректный username для базы
                 const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.username || user.first_name)}&t=${Date.now()}`;
                 const response = await fetch(url);
+                if (!response.ok) throw new Error('Network error');
                 const data = await response.json();
                 
                 if (data.points !== undefined) {
-                    // Форматируем число (например: 1 250 000)
                     document.getElementById('global-points').innerText = Math.floor(data.points).toLocaleString('ru-RU');
                 }
                 
-                // Обработка аватара
+                // Обновление аватара
                 const avatarDiv = document.getElementById('user-avatar-content');
                 if (data.avatar_url) {
-                    avatarDiv.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="this.innerHTML='${(user.first_name || "K").charAt(0).toUpperCase()}'">`;
+                    avatarDiv.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="handleAvaError()">`;
                 }
             } catch (e) { 
-                console.error("Ошибка API:", e); 
+                console.error("Ошибка загрузки данных:", e); 
             }
+        }
+
+        function handleAvaError() {
+            const avatarDiv = document.getElementById('user-avatar-content');
+            avatarDiv.innerHTML = (user?.first_name || "K").charAt(0).toUpperCase();
         }
 
         function openModule(url) {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            // Переход на страницу модуля (кликера или топа)
             window.location.href = url;
         }
 
-        // Запуск загрузки
+        // Выполняем загрузку
         fetchGlobalData();
-
-        // Обновляем данные раз в 30 секунд, пока пользователь в Хабе
+        // Обновляем раз в 30 секунд
         setInterval(fetchGlobalData, 30000);
     </script>
 </body>
