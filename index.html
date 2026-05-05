@@ -212,6 +212,11 @@
         tg.setHeaderColor('#1a1a1a');
         tg.setBackgroundColor('#0f0f0f');
 
+        // Скрываем кнопку "Назад" на главной странице
+        if (tg.BackButton) {
+            tg.BackButton.hide();
+        }
+
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
