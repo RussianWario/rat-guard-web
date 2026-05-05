@@ -12,6 +12,7 @@
             --accent-color: #f1c40f;
             --text-main: #ffffff;
             --text-dim: #888;
+            --danger-color: #e74c3c; /* Красный цвет для кнопки выхода */
         }
 
         body {
@@ -40,6 +41,26 @@
             box-sizing: border-box;
         }
 
+        /* Новая красная кнопка выхода в углу */
+        .exit-btn-top {
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+            transition: all 0.1s ease;
+        }
+
+        .exit-btn-top:active {
+            transform: scale(0.92);
+            background: #c0392b;
+        }
+
         .user-info { display: flex; align-items: center; gap: 10px; }
         .user-avatar { 
             width: 35px; height: 35px; border-radius: 50%; 
@@ -66,7 +87,7 @@
             justify-content: center;
             align-items: center;
             width: 100%;
-            padding-bottom: 80px; /* Отступ под фиксированное меню */
+            padding-bottom: 80px;
         }
 
         .character-container {
@@ -119,7 +140,6 @@
         }
         .games-main-btn:active { transform: scale(0.96); }
 
-        /* ФИКСИРОВАННОЕ МЕНЮ */
         .bottom-grid {
             position: fixed;
             bottom: 0;
@@ -150,26 +170,17 @@
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
         .nav-item:active, .nav-item.active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
-
-        .exit-btn {
-            position: absolute;
-            bottom: 100px;
-            color: #555;
-            font-size: 11px;
-            text-decoration: underline;
-            cursor: pointer;
-            padding: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
     </style>
 </head>
 <body>
 
     <div class="header">
+        <!-- Кнопка ВЫХОД в левом верхнем углу -->
+        <button class="exit-btn-top" onclick="tg.close()">Выход</button>
+        
         <div class="user-info">
-            <div class="user-avatar" id="user-avatar-content">?</div>
             <div id="username" style="font-size: 14px; font-weight: bold;">Загрузка...</div>
+            <div class="user-avatar" id="user-avatar-content">?</div>
         </div>
         <div class="balance">🧀 <span id="global-points">0</span></div>
     </div>
@@ -185,8 +196,6 @@
                 <span>🕹️</span> МИНИ-ИГРЫ
             </div>
         </div>
-
-        <div class="exit-btn" onclick="tg.close()">Выйти из хаба</div>
     </div>
 
     <!-- ЕДИНАЯ НАВИГАЦИЯ -->
@@ -212,7 +221,7 @@
         tg.setHeaderColor('#1a1a1a');
         tg.setBackgroundColor('#0f0f0f');
 
-        // Скрываем кнопку "Назад" на главной странице
+        // Гарантируем, что кнопка "Назад" скрыта в Хабе
         if (tg.BackButton) {
             tg.BackButton.hide();
         }
