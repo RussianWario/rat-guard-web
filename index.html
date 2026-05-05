@@ -66,6 +66,7 @@
             justify-content: center;
             align-items: center;
             width: 100%;
+            padding-bottom: 80px; /* Отступ под фиксированное меню */
         }
 
         .character-container {
@@ -93,6 +94,8 @@
             display: flex;
             justify-content: center;
             padding: 10px 0;
+            position: relative;
+            z-index: 5;
         }
 
         .games-main-btn {
@@ -116,17 +119,24 @@
         }
         .games-main-btn:active { transform: scale(0.96); }
 
+        /* ФИКСИРОВАННОЕ МЕНЮ */
         .bottom-grid {
+            position: fixed;
+            bottom: 0;
+            left: 0;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 8px;
             width: 100%;
-            padding: 15px 20px 10px 20px;
+            padding: 10px 20px 25px 20px;
+            background: var(--card-bg);
+            border-top: 1px solid #333;
             box-sizing: border-box;
+            z-index: 1000;
         }
 
         .nav-item {
-            background: var(--card-bg);
+            background: #0f0f0f;
             border-radius: 12px;
             padding: 10px 0;
             display: flex;
@@ -139,10 +149,11 @@
         }
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
-        .nav-item:active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
+        .nav-item:active, .nav-item.active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
 
         .exit-btn {
-            margin-bottom: 20px;
+            position: absolute;
+            bottom: 100px;
             color: #555;
             font-size: 11px;
             text-decoration: underline;
@@ -151,7 +162,6 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .exit-btn:active { color: #f1c40f; }
     </style>
 </head>
 <body>
@@ -166,34 +176,34 @@
 
     <div class="character-section">
         <div class="character-container">
-            <!-- Можно менять ссылку на любого персонажа-крысу -->
             <img src="https://img.icons8.com/isometric/200/rat.png" alt="Hero"> 
         </div>
         <p style="color: var(--text-dim); font-size: 11px; margin-top: 15px;">Статус: Охраняю склады</p>
-    </div>
-
-    <div class="games-btn-container">
-        <div class="games-main-btn" onclick="openModule('games_menu.html')">
-            <span>🕹️</span> КЛИКЕР
+        
+        <div class="games-btn-container">
+            <div class="games-main-btn" onclick="openModule('games_menu.html')">
+                <span>🕹️</span> МИНИ-ИГРЫ
+            </div>
         </div>
+
+        <div class="exit-btn" onclick="tg.close()">Выйти из хаба</div>
     </div>
 
+    <!-- ЕДИНАЯ НАВИГАЦИЯ -->
     <div class="bottom-grid">
-        <div class="nav-item" onclick="alert('Квесты в разработке!')">
-            <i>📅</i><span>КВЕСТЫ</span>
-        </div>
-        <div class="nav-item" onclick="alert('Скоро!')">
-            <i>🎡</i><span>КОЛЕСО</span>
+        <div class="nav-item active" onclick="openModule('index.html')">
+            <i>🏠</i><span>ХАБ</span>
         </div>
         <div class="nav-item" onclick="openModule('leaderboard.html')">
             <i>🏆</i><span>ТОП</span>
         </div>
-        <div class="nav-item" onclick="alert('Магазин откроется позже!')">
+        <div class="nav-item" onclick="openModule('games_menu.html')">
+            <i>🕹️</i><span>ИГРЫ</span>
+        </div>
+        <div class="nav-item" onclick="alert('Скоро!')">
             <i>🛒</i><span>МАГАЗИН</span>
         </div>
     </div>
-
-    <div class="exit-btn" onclick="tg.close()">Выйти из хаба</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -205,7 +215,6 @@
         const user = tg.initDataUnsafe?.user;
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
 
-        // Первичная настройка интерфейса
         if (user) {
             document.getElementById('username').innerText = user.username || user.first_name;
             document.getElementById('user-avatar-content').innerText = (user.first_name || "K").charAt(0).toUpperCase();
@@ -214,7 +223,6 @@
         async function fetchGlobalData() {
             if (!user?.id) return;
             try {
-                // Добавляем timestamp для обхода кэша и корректный username для базы
                 const url = `${BACKEND_URL}/get_profile/${user.id}?username=${encodeURIComponent(user.username || user.first_name)}&t=${Date.now()}`;
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Network error');
@@ -224,7 +232,6 @@
                     document.getElementById('global-points').innerText = Math.floor(data.points).toLocaleString('ru-RU');
                 }
                 
-                // Обновление аватара
                 const avatarDiv = document.getElementById('user-avatar-content');
                 if (data.avatar_url) {
                     avatarDiv.innerHTML = `<img src="${data.avatar_url}" alt="ava" onerror="handleAvaError()">`;
@@ -241,13 +248,10 @@
 
         function openModule(url) {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            // Переход на страницу модуля (кликера или топа)
             window.location.href = url;
         }
 
-        // Выполняем загрузку
         fetchGlobalData();
-        // Обновляем раз в 30 секунд
         setInterval(fetchGlobalData, 30000);
     </script>
 </body>
