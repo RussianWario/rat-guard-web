@@ -22,115 +22,141 @@
             padding: 0; 
             display: flex; 
             flex-direction: column; 
-            align-items: center;
             min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .title {
+        .header {
+            padding: 20px;
+            background: var(--card-bg);
+            border-bottom: 1px solid #222;
+            text-align: center;
+        }
+
+        .header h2 { 
+            margin: 0; 
+            font-size: 18px; 
+            text-transform: uppercase; 
+            letter-spacing: 2px; 
             color: var(--accent-color);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin: 25px 0;
-            font-size: 20px;
         }
 
         .games-list {
-            width: 100%;
-            padding: 0 20px;
-            box-sizing: border-box;
             flex-grow: 1;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            gap: 12px;
+            padding-bottom: 100px; /* Отступ под меню */
         }
 
         .game-card {
-            width: 100%; 
-            max-width: 400px; 
             background: var(--card-bg); 
             border-radius: 18px; 
-            padding: 20px; 
-            margin-bottom: 12px;
+            padding: 16px; 
             display: flex; 
             align-items: center; 
             gap: 15px; 
             border: 1px solid #222; 
             cursor: pointer;
             transition: all 0.2s ease;
-            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
         }
 
-        .game-card:active { 
+        .game-card:active:not(.locked) { 
             transform: scale(0.97); 
             border-color: var(--accent-color); 
         }
 
         .game-icon { 
-            font-size: 35px; 
-            background: #111;
-            width: 60px;
-            height: 60px;
+            font-size: 30px; 
+            background: #000;
+            width: 55px;
+            height: 55px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 12px;
+            border-radius: 14px;
+            border: 1px solid #333;
         }
 
         .game-info { flex-grow: 1; }
-        .game-info b { display: block; font-size: 17px; margin-bottom: 4px; }
-        .game-info span { font-size: 11px; color: var(--text-dim); line-height: 1.3; display: block; }
+        .game-info b { display: block; font-size: 16px; margin-bottom: 2px; }
+        .game-info span { font-size: 11px; color: var(--text-dim); line-height: 1.2; display: block; }
 
-        .locked { opacity: 0.5; cursor: default; }
-        .locked:active { transform: none; border-color: #222; }
+        /* Состояния */
+        .locked { opacity: 0.6; grayscale: 1; cursor: default; }
         
         .status-badge {
-            font-size: 9px;
+            font-size: 8px;
             background: #333;
-            color: #fff;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-top: 5px;
+            color: #aaa;
+            padding: 3px 7px;
+            border-radius: 6px;
+            margin-top: 6px;
             display: inline-block;
+            font-weight: bold;
+            text-transform: uppercase;
         }
 
-        /* НИЖНЯЯ НАВИГАЦИЯ */
-        .bottom-nav {
+        .play-hint {
+            font-size: 18px;
+            color: var(--accent-color);
+            opacity: 0.5;
+        }
+
+        /* ФИКСИРОВАННОЕ МЕНЮ (4 кнопки) */
+        .bottom-grid {
+            position: fixed;
+            bottom: 0;
+            left: 0;
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 5px;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
             width: 100%;
-            padding: 10px 10px 25px 10px;
-            background: #151515;
-            border-top: 1px solid #222;
+            padding: 10px 20px 25px 20px;
+            background: var(--card-bg);
+            border-top: 1px solid #333;
             box-sizing: border-box;
+            z-index: 1000;
         }
 
         .nav-item {
+            background: #0f0f0f;
+            border-radius: 12px;
+            padding: 10px 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 4px;
+            border: 1px solid #333;
             cursor: pointer;
-            padding: 5px 0;
+            transition: all 0.1s ease;
         }
         .nav-item i { font-style: normal; font-size: 18px; }
-        .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); text-transform: uppercase; }
-        .active-nav span { color: var(--accent-color); }
-        .nav-item:active { opacity: 0.7; }
+        .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
+        .nav-item:active, .nav-item.active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
+        .nav-item.active span { color: var(--accent-color); }
+
     </style>
 </head>
 <body>
 
-    <h2 class="title">Мини-игры</h2>
+    <div class="header">
+        <h2>Игровая Зона</h2>
+    </div>
 
     <div class="games-list">
         <!-- КЛИКЕР -->
-        <div class="game-card" onclick="location.href='clicker.html'">
-            <div class="game-icon">🖱️</div>
+        <div class="game-card" onclick="openModule('clicker.html')">
+            <div class="game-icon">🧀</div>
             <div class="game-info">
                 <b>Сырный Кликер</b>
                 <span>Защищай склады и собирай запасы</span>
             </div>
+            <div class="play-hint">▶</div>
         </div>
 
         <!-- САПЕР -->
@@ -139,7 +165,7 @@
             <div class="game-info">
                 <b>Сырный Сапер</b>
                 <span>Найди деликатес и не подорвись</span>
-                <div class="status-badge">В РАЗРАБОТКЕ</div>
+                <div class="status-badge">В разработке</div>
             </div>
         </div>
 
@@ -149,36 +175,49 @@
             <div class="game-info">
                 <b>Сырная Башня</b>
                 <span>Строй вертикальное Крысиное Логово</span>
-                <div class="status-badge">В РАЗРАБОТКЕ</div>
+                <div class="status-badge">В разработке</div>
             </div>
         </div>
     </div>
 
-    <!-- Быстрая навигация снизу -->
-    <div class="bottom-nav">
-        <div class="nav-item" onclick="location.href='index.html'"><i>🏠</i><span>ХАБ</span></div>
-        <div class="nav-item active-nav"><i>🕹️</i><span>ИГРЫ</span></div>
-        <div class="nav-item" onclick="alert('Скоро!')"><i>📅</i><span>КВЕСТЫ</span></div>
-        <div class="nav-item" onclick="location.href='leaderboard.html'"><i>🏆</i><span>ТОП</span></div>
-        <div class="nav-item" onclick="alert('Скоро!')"><i>🛒</i><span>МАГАЗИН</span></div>
+    <!-- МЕНЮ НАВИГАЦИИ -->
+    <div class="bottom-grid">
+        <div class="nav-item" onclick="openModule('index.html')">
+            <i>🏠</i><span>ХАБ</span>
+        </div>
+        <div class="nav-item" onclick="openModule('leaderboard.html')">
+            <i>🏆</i><span>ТОП</span>
+        </div>
+        <div class="nav-item active" onclick="openModule('games_menu.html')">
+            <i>🕹️</i><span>ИГРЫ</span>
+        </div>
+        <div class="nav-item" onclick="alert('Магазин откроется скоро!')">
+            <i>🛒</i><span>МАГАЗИН</span>
+        </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
-        
-        // Кнопка назад в интерфейсе Телеграм на всякий случай остается
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => { 
-            window.location.href = 'index.html'; 
-        });
+        tg.expand();
+        tg.setHeaderColor('#1a1a1a');
 
-        // Вибрация для активных игр
-        document.querySelectorAll('.game-card:not(.locked)').forEach(card => {
+        function openModule(url) {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('light');
+            }
+            window.location.href = url;
+        }
+
+        // Эффект при клике на заблокированные игры
+        document.querySelectorAll('.locked').forEach(card => {
             card.addEventListener('click', () => {
-                tg.HapticFeedback.impactOccurred('medium');
+                tg.HapticFeedback.notificationOccurred('warning');
             });
         });
+
+        // Скрываем кнопку назад, так как теперь есть удобное меню
+        tg.BackButton.hide();
     </script>
 </body>
 </html>
