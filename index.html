@@ -110,6 +110,7 @@
             50% { transform: translateY(-10px); }
         }
 
+        /* Контейнер остается для отступа, но кнопка внутри удалена */
         .games-btn-container {
             width: 100%;
             display: flex;
@@ -118,27 +119,6 @@
             position: relative;
             z-index: 5;
         }
-
-        .games-main-btn {
-            background: linear-gradient(135deg, #f1c40f, #d4ac0d);
-            color: #000;
-            width: 85%;
-            max-width: 340px;
-            padding: 18px;
-            border-radius: 25px;
-            text-align: center;
-            font-weight: 900;
-            font-size: 16px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
-            cursor: pointer;
-            transition: transform 0.1s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-        .games-main-btn:active { transform: scale(0.96); }
 
         .bottom-grid {
             position: fixed;
@@ -175,7 +155,6 @@
 <body>
 
     <div class="header">
-        <!-- Кнопка ВЫХОД в левом верхнем углу -->
         <button class="exit-btn-top" onclick="tg.close()">Выход</button>
         
         <div class="user-info">
@@ -191,14 +170,10 @@
         </div>
         <p style="color: var(--text-dim); font-size: 11px; margin-top: 15px;">Статус: Охраняю склады</p>
         
-        <div class="games-btn-container">
-            <div class="games-main-btn" onclick="openModule('games_menu.html')">
-                <span>🕹️</span> ИГРЫ
-            </div>
-        </div>
+        <!-- Большая желтая кнопка удалена отсюда -->
+        <div class="games-btn-container"></div>
     </div>
 
-    <!-- ЕДИНАЯ НАВИГАЦИЯ -->
     <div class="bottom-grid">
         <div class="nav-item active" onclick="openModule('index.html')">
             <i>🏠</i><span>ДОМ</span>
@@ -221,7 +196,6 @@
         tg.setHeaderColor('#1a1a1a');
         tg.setBackgroundColor('#0f0f0f');
 
-        // Гарантируем, что кнопка "Назад" скрыта в Хабе
         if (tg.BackButton) {
             tg.BackButton.hide();
         }
