@@ -48,7 +48,7 @@
             flex-direction: column;
             gap: 8px;
             padding: 15px;
-            padding-bottom: 110px; /* Отступ для меню */
+            padding-bottom: 110px;
         }
 
         .leader-item {
@@ -59,7 +59,6 @@
             justify-content: space-between;
             align-items: center;
             border: 1px solid #222;
-            transition: transform 0.1s;
         }
 
         .leader-info { display: flex; align-items: center; gap: 12px; }
@@ -82,7 +81,7 @@
         .leader-item:nth-child(2) .rank { background: #bdc3c7; color: #000; }
         .leader-item:nth-child(3) .rank { background: #cd7f32; color: #000; }
 
-        .name { font-weight: 600; font-size: 14px; }
+        .name { font-weight: 600; font-size: 14px; color: #eee; }
         .score { font-weight: bold; color: #2ecc71; font-size: 14px; }
 
         .bottom-grid {
@@ -110,11 +109,10 @@
             gap: 4px;
             border: 1px solid #333;
             cursor: pointer;
-            transition: all 0.1s ease;
         }
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
-        .nav-item:active, .nav-item.active { border-color: var(--accent-color); background: #222; transform: scale(0.95); }
+        .nav-item.active { border-color: var(--accent-color); background: #222; }
 
         .error-msg { color: #e74c3c; text-align: center; margin-top: 50px; padding: 20px; font-size: 14px; }
     </style>
@@ -154,21 +152,19 @@
 
         async function loadLeaderboard() {
             try {
-                // Добавляем кэш-бастер, чтобы данные всегда были свежими
+                // Используем метку времени для обхода кэша
                 const response = await fetch(`${BACKEND_URL}/leaderboard?t=${Date.now()}`);
                 if (!response.ok) throw new Error("Ошибка загрузки");
                 
                 const rawData = await response.json();
                 
-                // ГИБКАЯ ОБРАБОТКА: если бэкенд шлет список, делаем из него объект
-                const data = Array.isArray(rawData) ? { users: rawData, total_count: rawData.length } : rawData;
+                // На скриншоте image_1f1717.png видно, что приходит массив объектов
+                const users = Array.isArray(rawData) ? rawData : (rawData.users || []);
                 
-                document.getElementById('total-users').innerText = `Крыс в базе: ${data.total_count || 0}`;
+                document.getElementById('total-users').innerText = `Крыс в базе: ${users.length}`;
                 
                 const listContainer = document.getElementById('leader-list');
                 listContainer.innerHTML = '';
-
-                const users = data.users || [];
 
                 if (users.length === 0) {
                     listContainer.innerHTML = '<div style="text-align:center; padding-top:20px;">Пока тут пусто...</div>';
@@ -179,6 +175,7 @@
                     const item = document.createElement('div');
                     item.className = 'leader-item';
                     
+                    // Обработка имени
                     let displayName = user.username || "Анонимная крыса";
                     if (displayName.length > 15) displayName = displayName.substring(0, 13) + '...';
 
@@ -195,7 +192,7 @@
             } catch (e) {
                 console.error("Leaderboard Error:", e);
                 document.getElementById('leader-list').innerHTML = 
-                    '<div class="error-msg">⚠️ Логово временно недоступно. Сервер спит или обновляется.</div>';
+                    '<div class="error-msg">⚠️ Логово временно недоступно. Обнови страницу или загляни позже.</div>';
             }
         }
 
@@ -204,7 +201,6 @@
             window.location.href = url;
         }
 
-        // Запуск при загрузке
         loadLeaderboard();
     </script>
 </body>
