@@ -12,7 +12,7 @@
             --accent-color: #f1c40f;
             --text-main: #ffffff;
             --text-dim: #888;
-            --star-color: #5dade2; 
+            --star-color: #5dade2;
         }
 
         body { 
@@ -147,7 +147,14 @@
             100% { transform: translateY(-150px) scale(1.8) rotate(15deg); opacity: 0; }
         }
 
-        .error-msg { color: #e74c3c; font-size: 12px; height: 15px; margin-top: 5px; font-weight: bold; }
+        .error-msg { 
+            color: #e74c3c; 
+            font-size: 12px; 
+            min-height: 15px; 
+            margin-top: 5px; 
+            font-weight: bold; 
+            word-break: break-all;
+        }
         
         .action-buttons-row {
             display: flex;
@@ -261,7 +268,15 @@
     </div>
 
     <script>
-        // Инициализация Telegram WebApp
+        // АВАРИЙНЫЙ ЛОГГЕР ОШИБОК ДЛЯ МОБИЛОК
+        window.onerror = function(message, source, lineno, colno, error) {
+            const logBox = document.getElementById('error-log');
+            if (logBox) {
+                logBox.innerHTML = `⚠️ Ошибка: ${message} <br><small>Линия: ${lineno}</small>`;
+            }
+            return false;
+        };
+
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
@@ -279,8 +294,9 @@
             window.location.href = path;
         }
 
-        // Константы и глобальные переменные
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
+        window.BACKEND_URL = BACKEND_URL; // Передаем в глобальную область window для других JS файлов
+        
         const user = tg.initDataUnsafe?.user;
         
         const pointsSpan = document.getElementById('points');
@@ -289,28 +305,24 @@
         const ratBtn = document.getElementById('rat-button');
         const errorLog = document.getElementById('error-log');
 
-        // Установка имени (Защита от запуска вне TG)
         if (user) {
             document.getElementById('username').innerText = user.first_name;
-        } else {
-            document.getElementById('username').innerText = "Тестовая Крыса";
         }
 
-        // Базовая функция загрузки профиля (Её расширит upgrades.js)
         async function loadProfile() {
-            const currentUserId = user?.user_id || user?.id;
-            if (!currentUserId) {
-                console.warn("Профиль загружен в тестовом режиме (ПК браузер)");
+            if (!user?.id) {
+                document.getElementById('username').innerText = "Тестовая Крыса";
                 return;
             }
             try {
                 const tgUsername = user.username || 'rat_user';
-                const response = await fetch(`${BACKEND_URL}/get_profile/${currentUserId}?username=${tgUsername}&t=${Date.now()}`);
+                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${tgUsername}&t=${Date.now()}`);
                 
                 if (!response.ok) throw new Error("Ошибка сервера");
                 
                 const data = await response.json();
                 if (data.points !== undefined) {
+                    document.getElementById('username').innerText = user.first_name;
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
                     if (levelSpan) levelSpan.innerText = data.level || 1;
                     if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
@@ -322,12 +334,11 @@
             } catch (e) {
                 console.error(e);
                 if (errorLog) errorLog.innerText = "Логово временно недоступно";
+                document.getElementById('username').innerText = user.first_name || "Крыса";
             }
         }
 
-        // Базовая функция клика (Её перехватит и улучшит upgrades.js)
         async function handleTap(e) {
-            const currentUserId = user?.user_id || user?.id || "123456";
             let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
             pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
             
@@ -335,7 +346,7 @@
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
             try {
-                const res = await fetch(`${BACKEND_URL}/click/${currentUserId}`, { method: 'POST' });
+                const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { method: 'POST' });
                 const data = await res.json();
                 if (data.points !== undefined) {
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
@@ -355,8 +366,8 @@
             plus.innerText = '🧀';
             
             const rect = area.getBoundingClientRect();
-            const x = (e && (e.clientX || (e.touches && e.touches[0].clientX))) ? ((e.clientX || e.touches[0].clientX) - rect.left) : (rect.width / 2);
-            const y = (e && (e.clientY || (e.touches && e.touches[0].clientY))) ? ((e.clientY || e.touches[0].clientY) - rect.top) : (rect.height / 2);
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) ? ((e.clientX || e.touches[0].clientX) - rect.left) : (rect.width / 2);
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) ? ((e.clientY || e.touches[0].clientY) - rect.top) : (rect.height / 2);
 
             plus.style.left = `${x - 15}px`;
             plus.style.top = `${y - 15}px`;
@@ -365,7 +376,6 @@
             setTimeout(() => plus.remove(), 700);
         }
 
-        // Навешивание тачей на крысу
         if (ratBtn) {
             ratBtn.addEventListener('touchstart', (e) => {
                 e.preventDefault();
@@ -376,16 +386,11 @@
                 if (e.pointerType !== 'touch') handleTap(e);
             });
         }
+
+        loadProfile();
     </script>
     
     <script src="upgrades.js"></script>
     <script src="quests.js"></script>
-    
-    <script>
-        // Итоговый вызов загрузки после применения всех хуков из upgrades.js
-        window.addEventListener('DOMContentLoaded', () => {
-            loadProfile();
-        });
-    </script>
 </body>
 </html>
