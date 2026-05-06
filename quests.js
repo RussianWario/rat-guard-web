@@ -1,7 +1,7 @@
 // quests.js — Чистая игровая логика квестов кликера
 
 async function openQuests() {
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+    if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
     if (!document.getElementById('quests-overlay')) {
         try {
@@ -10,7 +10,8 @@ async function openQuests() {
             const html = await response.text();
             document.body.insertAdjacentHTML('beforeend', html);
         } catch (err) {
-            console.error("Не удалось загрузить интерфейс квестов");
+            console.error("Не удалось загрузить интерфейс квестов. Проверьте файл quests_modal.html");
+            alert("Ошибка: файл quests_modal.html не найден на сервере");
             return;
         }
     }
@@ -39,12 +40,13 @@ function closeQuestsModal() {
 
 async function renderQuests() {
     const listContainer = document.getElementById('quests-list');
-    const currentUserId = user?.user_id || user?.id;
+    const currentUserId = typeof user !== 'undefined' ? (user?.user_id || user?.id) : null;
+    const activeUrl = window.BACKEND_URL;
     
-    if (!listContainer || !currentUserId) return;
+    if (!listContainer || !currentUserId || !activeUrl) return;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/quests/${currentUserId}`);
+        const response = await fetch(`${activeUrl}/quests/${currentUserId}`);
         if (!response.ok) throw new Error();
         const quests = await response.json();
 
@@ -84,29 +86,28 @@ async function renderQuests() {
 }
 
 async function claimQuest(questId) {
-    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-    const currentUserId = user?.user_id || user?.id;
+    if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    const currentUserId = typeof user !== 'undefined' ? (user?.user_id || user?.id) : null;
+    const activeUrl = window.BACKEND_URL;
 
-    if (!currentUserId) return;
+    if (!currentUserId || !activeUrl) return;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/quests/claim/${currentUserId}/${questId}`, { method: 'POST' });
+        const response = await fetch(`${activeUrl}/quests/claim/${currentUserId}/${questId}`, { method: 'POST' });
         if (!response.ok) throw new Error();
         const data = await response.json();
 
         if (data.status === 'ok') {
             alert(data.message);
             
-            // Синхронизируем баланс и уровень на основном экране
             const pointsSpan = document.getElementById('points');
             const starsSpan = document.getElementById('lbl-stars');
-            const levelSpan = document.getElementById('lbl-level'); // Добавили синхронизацию уровня аккаунта
+            const levelSpan = document.getElementById('lbl-level');
             
             if (pointsSpan) pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
             if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
             if (levelSpan && data.level !== undefined) levelSpan.innerText = data.level;
             
-            // Обновляем список, чтобы кнопка сменилась на "Получено"
             renderQuests();
         } else {
             alert(data.message);
