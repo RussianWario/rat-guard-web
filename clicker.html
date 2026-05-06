@@ -310,6 +310,11 @@
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
                     if (levelSpan) levelSpan.innerText = data.level || 1;
                     if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
+                    
+                    // ВАЖНО: Записываем уровень мультитапа из базы, чтобы upgrades.js подхватил его
+                    if (ratBtn && data.multitap_level !== undefined) {
+                        ratBtn.setAttribute('data-multitap-level', data.multitap_level);
+                    }
                 }
             } catch (e) {
                 console.error(e);
@@ -318,6 +323,7 @@
             }
         }
 
+        // Дефолтная функция тапа (будет перехвачена динамически из upgrades.js)
         async function handleTap(e) {
             let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
             pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
@@ -367,14 +373,10 @@
             });
         }
 
-        function openUpgrades() {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            alert("Улучшения будут доступны в следующем модуле!");
-        }
-
+        // Квесты пока оставляем заглушкой, если для них нет отдельного файла
         function openQuests() {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            alert("Квесты будут доступны в следующем модуле!");
+            alert("Квесты будут доступны чуть позже!");
         }
 
         loadProfile();
