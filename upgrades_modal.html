@@ -1,0 +1,27 @@
+<div id="upgrades-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; display: flex; align-items: flex-end; opacity: 0; transition: opacity 0.2s ease;" onclick="closeUpgradesModal()">
+    
+    <div id="upgrades-sheet" style="width: 100%; background: #1a1a1a; border-radius: 25px 25px 0 0; border-top: 1px solid #333; padding: 25px 20px 40px 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1);" onclick="event.stopPropagation()">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; font-size: 18px; color: #f1c40f; letter-spacing: 0.5px;">ПРОКАЧКА КРЫСЫ</h3>
+            <button onclick="closeUpgradesModal()" style="background: #333; border: none; color: #fff; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer;">×</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            
+            <div style="background: #0f0f0f; border: 1px solid #222; padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <div style="font-weight: bold; font-size: 15px; color: #fff;">⚡ Мультитап</div>
+                        <div id="multitap-level-text" style="font-size: 11px; color: #888; margin-top: 2px;">Загрузка уровня...</div>
+                    </div>
+                </div>
+                
+                <button id="multitap-cost-btn" onclick="buyMultitap()" style="width: 100%; background: #f1c40f; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.1s;">
+                    Купить за 🧀 ...
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
