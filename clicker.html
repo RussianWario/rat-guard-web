@@ -36,7 +36,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px 100px 20px; /* Добавил отступ снизу под меню */
+            padding: 30px 20px 100px 20px;
             box-sizing: border-box;
             gap: 20px;
         }
@@ -102,7 +102,7 @@
             100% { transform: translateY(-150px) scale(1.8) rotate(15deg); opacity: 0; }
         }
 
-        .error-msg { color: #e74c3c; font-size: 12px; height: 15px; margin-top: 5px; }
+        .error-msg { color: #e74c3c; font-size: 13px; height: 15px; margin-top: 5px; font-weight: bold; }
         
         .footer-hint {
             color: #444;
@@ -143,7 +143,6 @@
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
         .nav-item.active { border-color: var(--accent-color); background: #222; }
         .nav-item:active { transform: scale(0.95); }
-
     </style>
 </head>
 <body>
@@ -163,7 +162,6 @@
         <div class="footer-hint">Тапай без остановки!</div>
     </div>
 
-    <!-- Новая навигация -->
     <div class="bottom-grid">
         <div class="nav-item" onclick="goToPath('index.html')">
             <i>🏠</i><span>ДОМ</span>
@@ -185,15 +183,20 @@
         tg.expand();
         tg.setHeaderColor('#0f0f0f');
 
-        // Кнопка назад в интерфейсе Телеграм
-        tg.BackButton.show();
-        tg.BackButton.onClick(() => {
-            goToPath('games_menu.html');
-        });
+        // Исправлена потенциальная ошибка падения скрипта на старых версиях ТГ
+        if (tg.BackButton) {
+            tg.BackButton.show();
+            tg.BackButton.onClick(() => {
+                flushClicks().then(() => goToPath('games_menu.html'));
+            });
+        }
 
         function goToPath(path) {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            window.location.href = path;
+            // Если уходим со страницы, принудительно сохраняем клики
+            flushClicks().then(() => {
+                window.location.href = path;
+            });
         }
 
         const BACKEND_URL = 'https://rat-guard-api.onrender.com';
@@ -201,6 +204,14 @@
         
         const pointsSpan = document.getElementById('points');
         const ratBtn = document.getElementById('rat-button');
+        const errorLog = document.getElementById('error-log');
+
+        // Переменные буфера кликов и анти-чита
+        let accumulatedClicks = 0; 
+        let sendTimeout = null;    
+        let lastTapTime = 0;       
+        let tapIntervals = [];     
+        let isBlocked = false;     
 
         if (user) {
             document.getElementById('username').innerText = user.first_name;
@@ -211,28 +222,92 @@
             try {
                 const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?t=${Date.now()}`);
                 const data = await response.json();
-                pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                if (data.points !== undefined) {
+                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                }
             } catch (e) {
-                document.getElementById('error-log').innerText = "Логово временно недоступно";
+                errorLog.innerText = "Логово временно недоступно";
             }
         }
 
-        async function handleTap(e) {
-            let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, ''));
-            pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
+        // Пакетная отправка на обновленный FastAPI бэкенд
+        async function flushClicks() {
+            if (accumulatedClicks === 0 || !user?.id) return;
             
-            spawnCheese(e);
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            const clicksToSend = accumulatedClicks;
+            accumulatedClicks = 0; 
 
             try {
-                const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { method: 'POST' });
+                const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ clicks: clicksToSend }) 
+                });
                 const data = await res.json();
                 if (data.points !== undefined) {
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
                 }
             } catch (err) {
-                console.error("Sync error");
+                console.error("Ошибка синхронизации");
+                accumulatedClicks += clicksToSend; // Возвращаем в буфер при сбое сети
             }
+        }
+
+        function handleTap(e) {
+            if (isBlocked) return;
+
+            const now = window.performance.now();
+            
+            // Защита от автокликеров
+            if (lastTapTime > 0) {
+                const interval = now - lastTapTime;
+                
+                // Скорость выше 15 кликов/сек
+                if (interval < 65) {
+                    triggerBlock("Подозрительная скорость! Отдохни.");
+                    return;
+                }
+
+                // Клик ботом секунда в секунду
+                tapIntervals.push(interval);
+                if (tapIntervals.length > 10) {
+                    tapIntervals.shift();
+                    const variances = tapIntervals.slice(1).map((val, i) => Math.abs(val - tapIntervals[i]));
+                    const isPerfectClicker = variances.every(v => v < 2); 
+                    
+                    if (isPerfectClicker) {
+                        triggerBlock("Использование автокликеров запрещено!");
+                        return;
+                    }
+                }
+            }
+            lastTapTime = now;
+
+            // Исправлен баг с NaN при парсинге строк с пробелами
+            let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
+            pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
+            
+            spawnCheese(e);
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+            accumulatedClicks++;
+
+            clearTimeout(sendTimeout);
+            sendTimeout = setTimeout(flushClicks, 2000);
+        }
+
+        function triggerBlock(message) {
+            isBlocked = true;
+            accumulatedClicks = 0;
+            errorLog.innerText = message;
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+            
+            setTimeout(() => {
+                isBlocked = false;
+                errorLog.innerText = "";
+                lastTapTime = 0;
+                tapIntervals = [];
+            }, 4000); 
         }
 
         function spawnCheese(e) {
@@ -252,14 +327,24 @@
             setTimeout(() => plus.remove(), 700);
         }
 
+        // Мультитач-обработчики с ограничением до 3 пальцев
         ratBtn.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            handleTap(e.touches[0]);
+            if (e.touches.length > 3) {
+                triggerBlock("Мультитач ограничен до 3 пальцев!");
+                return;
+            }
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                handleTap(e.changedTouches[i]);
+            }
         });
         
         ratBtn.addEventListener('click', (e) => {
             if (e.pointerType !== 'touch') handleTap(e);
         });
+
+        window.addEventListener('blur', flushClicks);
+        window.addEventListener('beforeunload', flushClicks);
 
         loadProfile();
     </script>
