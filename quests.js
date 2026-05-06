@@ -39,7 +39,6 @@ function closeQuestsModal() {
 
 async function renderQuests() {
     const listContainer = document.getElementById('quests-list');
-    // Страховка на случай, если на фронте ключ называется user_id или id
     const currentUserId = user?.user_id || user?.id;
     
     if (!listContainer || !currentUserId) return;
@@ -98,11 +97,14 @@ async function claimQuest(questId) {
         if (data.status === 'ok') {
             alert(data.message);
             
-            // Синхронизируем баланс на основном экране
+            // Синхронизируем баланс и уровень на основном экране
             const pointsSpan = document.getElementById('points');
             const starsSpan = document.getElementById('lbl-stars');
+            const levelSpan = document.getElementById('lbl-level'); // Добавили синхронизацию уровня аккаунта
+            
             if (pointsSpan) pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
             if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
+            if (levelSpan && data.level !== undefined) levelSpan.innerText = data.level;
             
             // Обновляем список, чтобы кнопка сменилась на "Получено"
             renderQuests();
