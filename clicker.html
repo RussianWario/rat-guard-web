@@ -12,6 +12,7 @@
             --accent-color: #f1c40f;
             --text-main: #ffffff;
             --text-dim: #888;
+            --star-color: #5dade2; /* Синий цвет для звезд */
         }
 
         body { 
@@ -46,7 +47,41 @@
             width: 100%;
         }
 
-        #username { margin: 0; font-size: 20px; color: var(--accent-color); opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+        /* Новая флекс-строка для разделения Ника и Звезд в углу */
+        .stats-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0 5px;
+            box-sizing: border-box;
+            margin-bottom: 5px;
+        }
+
+        #username { 
+            margin: 0; 
+            font-size: 20px; 
+            color: var(--accent-color); 
+            opacity: 0.8; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+        }
+
+        /* Стиль для плашки Звезд в правом верхнем углу панели */
+        .top-stars-badge {
+            background: #000;
+            padding: 5px 12px;
+            border-radius: 15px;
+            border: 1px solid var(--star-color);
+            font-weight: bold;
+            font-size: 14px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 0 15px rgba(93, 173, 226, 0.2);
+            text-shadow: 0 0 10px rgba(93, 173, 226, 0.5);
+        }
 
         .level-badge {
             background: rgba(241, 196, 15, 0.15);
@@ -70,17 +105,6 @@
             justify-content: center;
             gap: 12px;
             text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
-        }
-
-        .global-currency {
-            font-size: 15px;
-            font-weight: bold;
-            color: #5dade2;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            margin-bottom: 5px;
         }
 
         #clicker-container {
@@ -127,7 +151,6 @@
 
         .error-msg { color: #e74c3c; font-size: 12px; height: 15px; margin-top: 5px; font-weight: bold; }
         
-        /* КНОПКИ УЛУЧШЕНИЙ И КВЕСТОВ */
         .action-buttons-row {
             display: flex;
             gap: 12px;
@@ -165,7 +188,6 @@
             letter-spacing: 1px;
         }
 
-        /* НАВИГАЦИЯ */
         .bottom-grid {
             position: fixed;
             bottom: 0;
@@ -202,10 +224,13 @@
 
     <div class="game-container">
         <div class="stats-panel">
-            <h2 id="username">Загрузка...</h2>
+            <div class="stats-header-row">
+                <h2 id="username">Загрузка...</h2>
+                <div class="top-stars-badge">⭐ <span id="lbl-stars">0</span></div>
+            </div>
+            
             <div class="level-badge">ЛОГОВО: <span id="lbl-level">1</span> УРОВЕНЬ</div>
             <div class="points">🧀 <span id="points">0</span></div>
-            <div class="global-currency">⭐ <span id="lbl-stars">0</span> Звёзд</div>
             <div id="error-log" class="error-msg"></div>
         </div>
 
@@ -243,7 +268,6 @@
         tg.expand();
         tg.setHeaderColor('#0f0f0f');
 
-        // Кнопка назад в интерфейсе Телеграм
         if (tg.BackButton) {
             tg.BackButton.show();
             tg.BackButton.onClick(() => {
@@ -276,7 +300,6 @@
             }
             try {
                 const tgUsername = user.username || 'rat_user';
-                // Исправлено: передаем username, чтобы бэкенд отдал профиль без зависаний
                 const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${tgUsername}&t=${Date.now()}`);
                 
                 if (!response.ok) throw new Error("Ошибка сервера");
@@ -286,7 +309,7 @@
                     document.getElementById('username').innerText = user.first_name;
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
                     if (levelSpan) levelSpan.innerText = data.level || 1;
-                    if (starsSpan) starsSpan.innerText = data.stars || 0;
+                    if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
                 }
             } catch (e) {
                 console.error(e);
@@ -308,7 +331,7 @@
                 if (data.points !== undefined) {
                     pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
                     if (levelSpan) levelSpan.innerText = data.level || 1;
-                    if (starsSpan) starsSpan.innerText = data.stars || 0;
+                    if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
                 }
             } catch (err) {
                 console.error("Sync error");
@@ -344,7 +367,6 @@
             });
         }
 
-        // Заглушки функций для выноса в отдельный файл, чтобы ничего не ломалось
         function openUpgrades() {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             alert("Улучшения будут доступны в следующем модуле!");
