@@ -36,7 +36,8 @@ async function openUpgrades() {
     }, 10);
 
     // Запрашиваем текущий уровень мультитапа, сохраненный в кнопке крысы, и обновляем текст
-    const currentMultitapLevel = parseInt(document.getElementById('rat-button').getAttribute('data-multitap-level')) || 1;
+    const ratBtn = document.getElementById('rat-button');
+    const currentMultitapLevel = ratBtn ? (parseInt(ratBtn.getAttribute('data-multitap-level')) || 1) : 1;
     updateUpgradeUI(currentMultitapLevel);
 }
 
@@ -66,7 +67,7 @@ async function buyMultitap() {
     const levelSpan = document.getElementById('lbl-level');
     const ratBtn = document.getElementById('rat-button');
     
-    if (!pointsSpan || !ratBtn) return;
+    if (!pointsSpan || !ratBtn || !user?.id) return;
     
     let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
     let currentMultitapLevel = parseInt(ratBtn.getAttribute('data-multitap-level')) || 1;
@@ -78,7 +79,7 @@ async function buyMultitap() {
         return;
     }
     
-    // Оптимистичное списание на фронте
+    // Оптимистичное списание на фронте для моментального отклика UI
     currentPoints -= cost;
     pointsSpan.innerText = currentPoints.toLocaleString('ru-RU');
     
@@ -98,11 +99,65 @@ async function buyMultitap() {
             if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         } else {
             alert("Ошибка базы: " + data.message);
-            loadProfile(); 
+            if (typeof loadProfile === 'function') loadProfile(); 
         }
     } catch (err) {
         console.error("Upgrade error:", err);
         alert("Логово не ответило на запрос покупки");
-        loadProfile();
+        if (typeof loadProfile === 'function') loadProfile();
     }
+}
+
+// ====================================================================
+-- ДИНАМИЧЕСКИЙ ПЕРЕХВАТ КЛИКОВ (С учетом силы мультитапа)
+// ====================================================================
+if (typeof window.handleTap === 'function') {
+    window.handleTap = async function(e) {
+        const pointsSpan = document.getElementById('points');
+        const levelSpan = document.getElementById('lbl-level');
+        const starsSpan = document.getElementById('lbl-stars');
+        const ratBtn = document.getElementById('rat-button');
+        
+        if (!pointsSpan || !ratBtn || !user?.id) return;
+
+        // Получаем текущий уровень мультитапа из дата-атрибута кнопки крысы
+        let currentMultitapLevel = parseInt(ratBtn.getAttribute('data-multitap-level')) || 1;
+        let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
+        
+        // Визуально начисляем сыр на фронте сразу с учетом множителя апгрейда
+        pointsSpan.innerText = (currentPoints + currentMultitapLevel).toLocaleString('ru-RU');
+        
+        // Спавним летящий сырок и запускаем вибрацию телефона
+        if (typeof spawnCheese === 'function') spawnCheese(e);
+        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+        // Отправляем синхронизацию клика на бэкенд
+        try {
+            const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { method: 'POST' });
+            if (!res.ok) throw new Error();
+            const data = await res.json();
+            
+            if (data.points !== undefined) {
+                pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                if (levelSpan) levelSpan.innerText = data.level || 1;
+                if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
+            }
+        } catch (err) {
+            console.error("Ошибка синхронизации клика с Логовом");
+        }
+    };
+}
+
+// Дополнительный хук в loadProfile: ждем когда загрузится профиль и обновляем локальный уровень кнопки
+const originalLoadProfile = window.loadProfile;
+if (typeof originalLoadProfile === 'function') {
+    window.loadProfile = async function() {
+        await originalLoadProfile();
+        // После отработки оригинальной функции подтягиваем актуальный уровень в кнопку, если модалка открыта
+        const ratBtn = document.getElementById('rat-button');
+        if (ratBtn && document.getElementById('upgrades-overlay')?.style.display === 'flex') {
+            const currentMultitapLevel = parseInt(ratBtn.getAttribute('data-multitap-level')) || 1;
+            updateUpgradeUI(currentMultitapLevel);
+        }
+    };
 }
