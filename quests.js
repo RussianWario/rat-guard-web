@@ -39,10 +39,13 @@ function closeQuestsModal() {
 
 async function renderQuests() {
     const listContainer = document.getElementById('quests-list');
-    if (!listContainer || !user?.id) return;
+    // Страховка на случай, если на фронте ключ называется user_id или id
+    const currentUserId = user?.user_id || user?.id;
+    
+    if (!listContainer || !currentUserId) return;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/quests/${user.id}`);
+        const response = await fetch(`${BACKEND_URL}/quests/${currentUserId}`);
         if (!response.ok) throw new Error();
         const quests = await response.json();
 
@@ -83,9 +86,12 @@ async function renderQuests() {
 
 async function claimQuest(questId) {
     if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+    const currentUserId = user?.user_id || user?.id;
+
+    if (!currentUserId) return;
 
     try {
-        const response = await fetch(`${BACKEND_URL}/quests/claim/${user.id}/${questId}`, { method: 'POST' });
+        const response = await fetch(`${BACKEND_URL}/quests/claim/${currentUserId}/${questId}`, { method: 'POST' });
         if (!response.ok) throw new Error();
         const data = await response.json();
 
