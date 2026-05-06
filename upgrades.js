@@ -109,10 +109,10 @@ async function buyMultitap() {
 }
 
 // ====================================================================
--- ДИНАМИЧЕСКИЙ ПЕРЕХВАТ КЛИКОВ (С учетом силы мультитапа)
+// ДИНАМИЧЕСКИЙ ПЕРЕХВАТ КЛИКОВ (С учетом силы мультитапа)
 // ====================================================================
-if (typeof window.handleTap === 'function') {
-    window.handleTap = async function(e) {
+if (typeof handleTap === 'function') {
+    handleTap = async function(e) {
         const pointsSpan = document.getElementById('points');
         const levelSpan = document.getElementById('lbl-level');
         const starsSpan = document.getElementById('lbl-stars');
