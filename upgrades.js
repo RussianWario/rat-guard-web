@@ -1,91 +1,108 @@
-// upgrades.js - Изолированная логика улучшений
+// upgrades.js — Изолированная логика улучшений и управления UI
 
-// Базовые настройки для Мультитапа
-const MULTITAP_BASE_COST = 100; // Цена 2-го уровня
-const MULTITAP_COST_MULTIPLIER = 2; // Каждая покупка удваивает цену
+const MULTITAP_BASE_COST = 100;
+const MULTITAP_COST_MULTIPLIER = 2;
 
-/**
- * Рассчитывает стоимость следующего уровня мультитапа
- * Формула: BASE_COST * (MULTIPLIER ^ (current_level - 1))
- */
 function calculateUpgradeCost(currentLevel) {
     if (currentLevel < 1) currentLevel = 1;
     return MULTITAP_BASE_COST * Math.pow(MULTITAP_COST_MULTIPLIER, currentLevel - 1);
 }
 
-/**
- * Функция прокачки мультитапа
- * Вызывается из интерфейса улучшений
- */
-async function buyMultitap() {
-    // 1. Получаем текущие очки со страницы кликера
-    const pointsSpan = document.getElementById('points');
-    const levelSpan = document.getElementById('lbl-level');
-    
-    if (!pointsSpan) return;
-    
-    let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
-    // Предполагаем, что уровень мы можем хранить в data-атрибуте или брать из lbl-level
-    let currentMultitapLevel = parseInt(document.getElementById('rat-button').getAttribute('data-multitap-level')) || 1;
-    
-    const cost = calculateUpgradeCost(currentMultitapLevel);
-    
-    // Проверка на стороне фронтенда, хватает ли сыра
-    if (currentPoints < cost) {
-        alert("🚨 Недостаточно сыра 🧀 для прокачки!");
-        return;
-    }
-    
-    // Оптимистичный апдейт баланса на экране (чтобы не ждало ответа сервера)
-    currentPoints -= cost;
-    pointsSpan.innerText = currentPoints.toLocaleString('ru-RU');
-    
-    try {
-        // 2. Отправляем запрос на бэкенд (этот эндпоинт мы настроим в FastAPI)
-        const response = await fetch(`${BACKEND_URL}/upgrade/multitap/${user.id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (!response.ok) throw new Error("Ошибка при покупке");
-        
-        const data = await response.json();
-        
-        if (data.status === "ok") {
-            // Обновляем данные на экране актуальными значениями от бэка
-            pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
-            if (levelSpan) levelSpan.innerText = data.level || 1;
-            
-            // Запоминаем новый уровень мультитапа в кнопке
-            document.getElementById('rat-button').setAttribute('data-multitap-level', data.multitap_level);
-            
-            // Если открыто модальное окно — обновляем в нем ценник
-            updateUpgradeUI(data.multitap_level);
-            
-            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        } else {
-            alert("Ошибка: " + data.message);
-            // Возвращаем баланс назад в случае ошибки базы данных
-            loadProfile(); 
+// Динамическое открытие модалки без изменения разметки clicker.html
+async function openUpgrades() {
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+    // Если модалки еще нет на странице — скачиваем её файл и вставляем в body
+    if (!document.getElementById('upgrades-overlay')) {
+        try {
+            const response = await fetch('upgrades_modal.html');
+            if (!response.ok) throw new Error();
+            const html = await response.text();
+            document.body.insertAdjacentHTML('beforeend', html);
+        } catch (err) {
+            console.error("Не удалось загрузить интерфейс улучшений");
+            return;
         }
-        
-    } catch (err) {
-        console.error("Upgrade error:", err);
-        alert("Не удалось связаться с логовом для покупки");
-        loadProfile();
     }
+
+    // Показываем окно с анимацией
+    const overlay = document.getElementById('upgrades-overlay');
+    const sheet = document.getElementById('upgrades-sheet');
+    
+    overlay.style.display = 'flex';
+    setTimeout(() => {
+        overlay.style.opacity = '1';
+        sheet.style.transform = 'translateY(0)';
+    }, 10);
+
+    // Запрашиваем текущий уровень мультитапа, сохраненный в кнопке крысы, и обновляем текст
+    const currentMultitapLevel = parseInt(document.getElementById('rat-button').getAttribute('data-multitap-level')) || 1;
+    updateUpgradeUI(currentMultitapLevel);
 }
 
-/**
- * Обновляет текст кнопки и цену в меню улучшений
- */
+function closeUpgradesModal() {
+    const overlay = document.getElementById('upgrades-overlay');
+    const sheet = document.getElementById('upgrades-sheet');
+    if (!overlay) return;
+
+    overlay.style.opacity = '0';
+    sheet.style.transform = 'translateY(100%)';
+    setTimeout(() => { overlay.style.display = 'none'; }, 200);
+}
+
 function updateUpgradeUI(currentLevel) {
     const costBtn = document.getElementById('multitap-cost-btn');
     const textLevel = document.getElementById('multitap-level-text');
     
     if (costBtn && textLevel) {
         const nextCost = calculateUpgradeCost(currentLevel);
-        textLevel.innerText = `Текущий уровень: ${currentLevel} (Клик: +${currentLevel})`;
-        costBtn.innerText = `Купить за 🧀 ${nextCost.toLocaleString('ru-RU')}`;
+        textLevel.innerText = `Увеличивает силу тапа. Текущий уровень: ${currentLevel} (Клик: +${currentLevel})`;
+        costBtn.innerText = `Прокачать за 🧀 ${nextCost.toLocaleString('ru-RU')}`;
+    }
+}
+
+async function buyMultitap() {
+    const pointsSpan = document.getElementById('points');
+    const levelSpan = document.getElementById('lbl-level');
+    const ratBtn = document.getElementById('rat-button');
+    
+    if (!pointsSpan || !ratBtn) return;
+    
+    let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
+    let currentMultitapLevel = parseInt(ratBtn.getAttribute('data-multitap-level')) || 1;
+    const cost = calculateUpgradeCost(currentMultitapLevel);
+    
+    if (currentPoints < cost) {
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+        alert("🚨 Недостаточно сыра 🧀!");
+        return;
+    }
+    
+    // Оптимистичное списание на фронте
+    currentPoints -= cost;
+    pointsSpan.innerText = currentPoints.toLocaleString('ru-RU');
+    
+    try {
+        const response = await fetch(`${BACKEND_URL}/upgrade/multitap/${user.id}`, { method: 'POST' });
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        
+        if (data.status === "ok") {
+            pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+            if (levelSpan) levelSpan.innerText = data.level || 1;
+            
+            // Сохраняем новый уровень в дата-атрибут кнопки
+            ratBtn.setAttribute('data-multitap-level', data.multitap_level);
+            updateUpgradeUI(data.multitap_level);
+            
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        } else {
+            alert("Ошибка базы: " + data.message);
+            loadProfile(); 
+        }
+    } catch (err) {
+        console.error("Upgrade error:", err);
+        alert("Логово не ответило на запрос покупки");
+        loadProfile();
     }
 }
