@@ -84,14 +84,7 @@
             margin-bottom: 10px;
         }
 
-        #clicker-container {
-            position: relative;
-            width: 260px;
-            height: 260px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+        { position: relative; width: 260px; height: 260px; display: flex; justify-content: center; align-items: center; }
 
         #rat-button {
             width: 100%;
@@ -322,14 +315,14 @@
                     <h4>Острые зубки</h4>
                     <p>Увеличивает силу клика на +1</p>
                 </div>
-                <button class="buy-btn">150 🧀</button>
+                <button class="buy-btn" onclick="buyUpgrade('multitap')">150 🧀</button>
             </div>
             <div class="shop-item">
                 <div class="item-info">
                     <h4>Крыса-попрошайка</h4>
                     <p>Пассивный доход: +1 🧀/сек</p>
                 </div>
-                <button class="buy-btn">500 🧀</button>
+                <button class="buy-btn" onclick="buyUpgrade('passive')">500 🧀</button>
             </div>
         </div>
     </div>
@@ -357,7 +350,7 @@
             <div class="shop-item">
                 <div class="item-info">
                     <h4>Золотая Корона Крысы</h4>
-                    <p>Уникальный скин лидера логова</p>
+                    <p>Униеальный скин лидера логова</p>
                 </div>
                 <button class="buy-btn" style="background:#3498db; color:#fff;">10 ⭐</button>
             </div>
@@ -419,10 +412,172 @@
         let tapIntervals = [];     
         let isBlocked = false;     
 
-        if (user) {
-            document.getElementById('username').innerText = user.first_name;
+        // Рендеринг текста квестов в зависимости от уровня
+        function defineQuestText(lvl) {
+            const requirements = {
+                1: "Требуется накопить: 5 000 🧀 для пробития стены подвала. Награда: 5 ⭐",
+                2: "Требуется накопить: 25 000 🧀 для захвата раций охраны. Награда: 12 ⭐",
+                3: "Требуется накопить: 100 000 🧀 для постройки вентиляции бункера. Награда: 30 ⭐"
+            };
+            if (questDesc) {
+                questDesc.innerText = requirements[lvl] || "Все доступные этапы логова успешно пройдены!";
+            }
         }
 
-        // Рендеринг текста квестов в зависимости от уровня
-        defueQuestText(1);
-        function def
+        async function loadProfile() {
+            if (!user?.id) {
+                document.getElementById('username').innerText = "Тестовая Крыса";
+                return;
+            }
+            try {
+                const tgUsername = user.username || 'rat_user';
+                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${tgUsername}&t=${Date.now()}`);
+                
+                if (!response.ok) throw new Error("Ошибка сервера");
+                
+                const data = await response.json();
+                if (data.points !== undefined) {
+                    document.getElementById('username').innerText = user.first_name;
+                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                    levelSpan.innerText = data.level || 1;
+                    starsSpan.innerText = data.stars || 0;
+                    defineQuestText(data.level || 1);
+                }
+            } catch (e) {
+                console.error(e);
+                if (errorLog) errorLog.innerText = "Ошибка загрузки профиля.";
+                document.getElementById('username').innerText = user.first_name || "Крыса";
+            }
+        }
+
+        async function flushClicks() {
+            if (accumulatedClicks <= 0 || !user?.id) return;
+            const clicksToSend = accumulatedClicks;
+            accumulatedClicks = 0;
+
+            try {
+                const response = await fetch(`${BACKEND_URL}/click`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: String(user.id), clicks: clicksToSend })
+                });
+                const data = await response.json();
+                if (data.points !== undefined) {
+                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                    levelSpan.innerText = data.level || 1;
+                    starsSpan.innerText = data.stars || 0;
+                }
+            } catch (e) {
+                if (errorLog) errorLog.innerText = "Ошибка сохранения кликов";
+                accumulatedClicks += clicksToSend; 
+            }
+        }
+
+        async function buyUpgrade(type) {
+            if (!user?.id) return;
+            await flushClicks(); 
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/buy_upgrade/${user.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ upgrade_type: type })
+                });
+                const data = await res.json();
+                
+                if (data.status === "ok") {
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+                    forceCloseModal('upgrades-modal');
+                    await loadProfile(); 
+                } else {
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                    alert(data.message || "Ошибка при покупке");
+                }
+            } catch (e) {
+                alert("Ошибка запроса улучшения");
+            }
+        }
+
+        async function requestLevelUp() {
+            if (!user?.id) return;
+            await flushClicks();
+
+            try {
+                const res = await fetch(`${BACKEND_URL}/level_up/${user.id}`, { method: 'POST' });
+                const data = await res.json();
+                
+                if (data.status === "ok") {
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    alert(`Поздравляем! Логово расширено до ${data.level} уровня!`);
+                    forceCloseModal('quests-modal');
+                    await loadProfile();
+                } else {
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
+                    alert(data.message || "Условия квеста не выполнены!");
+                }
+            } catch (e) {
+                alert("Ошибка запроса повышения уровня");
+            }
+        }
+
+        // Логика кликера на фронте
+        if (ratBtn) {
+            ratBtn.addEventListener('touchstart', (e) => {
+                if (isBlocked) return;
+                e.preventDefault();
+
+                const now = Date.now();
+                if (lastTapTime > 0) {
+                    tapIntervals.push(now - lastTapTime);
+                    if (tapIntervals.length > 20) tapIntervals.shift();
+                }
+                lastTapTime = now;
+
+                if (tapIntervals.length >= 10) {
+                    const avg = tapIntervals.reduce((a, b) => a + b, 0) / tapIntervals.length;
+                    if (avg < 45) { 
+                        isBlocked = true;
+                        if (errorLog) errorLog.innerText = "Автокликер обнаружен! Доступ временно заблокирован.";
+                        setTimeout(() => { isBlocked = false; tapIntervals = []; if (errorLog) errorLog.innerText = ""; }, 5000);
+                        return;
+                    }
+                }
+
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+
+                let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
+                currentPoints += 1;
+                pointsSpan.innerText = currentPoints.toLocaleString('ru-RU');
+                accumulatedClicks += 1;
+
+                const touch = e.touches[0];
+                const area = document.getElementById('click-animation-area');
+                if (area) {
+                    const plusOne = document.createElement('div');
+                    plusOne.className = 'plus-one';
+                    plusOne.innerText = '+1';
+                    plusOne.style.color = '#f1c40f';
+                    
+                    const rect = area.getBoundingClientRect();
+                    const x = touch.clientX - rect.left;
+                    const y = touch.clientY - rect.top;
+                    
+                    plusOne.style.left = `${x}px`;
+                    plusOne.style.top = `${y}px`;
+                    
+                    area.appendChild(plusOne);
+                    setTimeout(() => plusOne.remove(), 700);
+                }
+
+                clearTimeout(sendTimeout);
+                sendTimeout = setTimeout(flushClicks, 1000);
+            });
+        }
+
+        // Первоначальный запуск
+        defineQuestText(1);
+        loadProfile();
+    </script>
+</body>
+</html>
