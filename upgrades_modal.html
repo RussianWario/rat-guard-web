@@ -1,58 +1,65 @@
-<div id="upgrades-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; display: flex; align-items: flex-end; opacity: 0; transition: opacity 0.2s ease;" onclick="closeUpgradesModal()">
+<div id="upgrades-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; display: flex; align-items: flex-end; opacity: 0; transition: opacity 0.2s ease;" onclick="closeUpgradesModal()">
     
-    <div id="upgrades-sheet" style="width: 100%; background: #1a1a1a; border-radius: 25px 25px 0 0; border-top: 1px solid #333; padding: 25px 20px 40px 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.2s cubic-bezier(0, 0, 0.2, 1); max-height: 80vh; overflow-y: auto;" onclick="event.stopPropagation()">
+    <div id="upgrades-sheet" style="width: 100%; background: #121212; border-radius: 30px 30px 0 0; border-top: 2px solid #333; padding: 25px 20px 40px 20px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); max-height: 85vh; overflow-y: auto;" onclick="event.stopPropagation()">
         
-        <div style="position: sticky; top: 0; background: #1a1a1a; display: flex; justify-content: space-between; align-items: center; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #222; z-index: 10;">
-            <h3 style="margin: 0; font-size: 18px; color: #f1c40f; letter-spacing: 0.5px;">ПРОКАЧКА КРЫСЫ</h3>
-            <button onclick="closeUpgradesModal()" style="background: #333; border: none; color: #fff; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer;">×</button>
+        <div style="position: sticky; top: -25px; background: #121212; display: flex; justify-content: space-between; align-items: center; padding: 10px 0 20px 0; margin-bottom: 20px; border-bottom: 1px solid #222; z-index: 10;">
+            <div>
+                <h3 style="margin: 0; font-size: 20px; color: #f1c40f; letter-spacing: 0.5px; text-transform: uppercase;">Прокачка</h3>
+                <div style="font-size: 11px; color: #666;">Улучшай свои навыки и пассивный доход</div>
+            </div>
+            <button onclick="closeUpgradesModal()" style="background: #222; border: 1px solid #444; color: #fff; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center;">×</button>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 12px;">
             
-            <div style="background: #0f0f0f; border: 1px solid #222; padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-weight: bold; font-size: 15px; color: #fff;">⚡ Мультитап</div>
-                        <div id="multitap-level-text" style="font-size: 11px; color: #888; margin-top: 2px;">Загрузка уровня...</div>
+            <div style="background: #1a1a1a; border: 1px solid #333; padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(241, 196, 15, 0.1); padding: 10px; border-radius: 12px; font-size: 20px;">⚡</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 16px; color: #fff;">Мультитап</div>
+                        <div id="multitap-level-text" style="font-size: 12px; color: #aaa; margin-top: 2px;">Загрузка...</div>
                     </div>
                 </div>
-                <button id="multitap-cost-btn" onclick="buyMultitap()" style="width: 100%; background: #f1c40f; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.1s;">
+                <button id="multitap-cost-btn" onclick="buyUpgrade('multitap')" style="width: 100%; background: #f1c40f; color: #000; border: none; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; transition: transform 0.1s, opacity 0.2s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                     Купить за 🧀 ...
                 </button>
             </div>
 
-            <div style="background: #0f0f0f; border: 1px solid #222; padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-weight: bold; font-size: 15px; color: #fff;">🐾 Дрессированная крыса</div>
-                        <div id="rat_helper-level-text" style="font-size: 11px; color: #888; margin-top: 2px;">Загрузка уровня...</div>
+            <div style="background: #1a1a1a; border: 1px solid #333; padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(46, 204, 113, 0.1); padding: 10px; border-radius: 12px; font-size: 20px;">🐾</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 16px; color: #fff;">Дрессированная крыса</div>
+                        <div id="rat_helper-level-text" style="font-size: 12px; color: #aaa; margin-top: 2px;">Загрузка...</div>
                     </div>
                 </div>
-                <button id="rat_helper-cost-btn" onclick="buyUpgrade('rat_helper')" style="width: 100%; background: #2ecc71; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.1s;">
+                <button id="rat_helper-cost-btn" onclick="buyUpgrade('rat_helper')" style="width: 100%; background: #2ecc71; color: #000; border: none; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                     Купить за 🧀 ...
                 </button>
             </div>
 
-            <div style="background: #0f0f0f; border: 1px solid #222; padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-weight: bold; font-size: 15px; color: #fff;">🏭 Сырная мануфактура</div>
-                        <div id="factory-level-text" style="font-size: 11px; color: #888; margin-top: 2px;">Загрузка уровня...</div>
+            <div style="background: #1a1a1a; border: 1px solid #333; padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(230, 126, 34, 0.1); padding: 10px; border-radius: 12px; font-size: 20px;">🏭</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 16px; color: #fff;">Сырная мануфактура</div>
+                        <div id="factory-level-text" style="font-size: 12px; color: #aaa; margin-top: 2px;">Загрузка...</div>
                     </div>
                 </div>
-                <button id="factory-cost-btn" onclick="buyUpgrade('factory')" style="width: 100%; background: #e67e22; color: #000; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.1s;">
+                <button id="factory-cost-btn" onclick="buyUpgrade('factory')" style="width: 100%; background: #e67e22; color: #000; border: none; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                     Купить за 🧀 ...
                 </button>
             </div>
 
-            <div style="background: #0f0f0f; border: 1px solid #222; padding: 15px; border-radius: 16px; display: flex; flex-direction: column; gap: 10px;">
-                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                    <div>
-                        <div style="font-weight: bold; font-size: 15px; color: #fff;">🏢 Крысиный синдикат</div>
-                        <div id="syndicate-level-text" style="font-size: 11px; color: #888; margin-top: 2px;">Загрузка уровня...</div>
+            <div style="background: #1a1a1a; border: 1px solid #333; padding: 18px; border-radius: 20px; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: rgba(155, 89, 182, 0.1); padding: 10px; border-radius: 12px; font-size: 20px;">🏢</div>
+                    <div style="flex-grow: 1;">
+                        <div style="font-weight: bold; font-size: 16px; color: #fff;">Крысиный синдикат</div>
+                        <div id="syndicate-level-text" style="font-size: 12px; color: #aaa; margin-top: 2px;">Загрузка...</div>
                     </div>
                 </div>
-                <button id="syndicate-cost-btn" onclick="buyUpgrade('syndicate')" style="width: 100%; background: #9b59b6; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: 900; font-size: 13px; cursor: pointer; transition: background 0.1s;">
+                <button id="syndicate-cost-btn" onclick="buyUpgrade('syndicate')" style="width: 100%; background: #9b59b6; color: #fff; border: none; padding: 14px; border-radius: 14px; font-weight: 900; font-size: 14px; cursor: pointer; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='scale(1)'">
                     Купить за 🧀 ...
                 </button>
             </div>
