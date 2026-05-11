@@ -1,132 +1,110 @@
-// upgrades.js — Обновленная логика с балансом и связью для квестов
+// quests.js — Финальная версия, полностью синхронизированная с твоим upgrades.js
 
-const UPGRADE_CONFIG = {
-    multitap:   { base: 100,   mult: 1.5, label: "Мультитап" },
-    rat_helper: { base: 500,   mult: 1.6, label: "Дрессированная крыса" },
-    factory:    { base: 2500,  mult: 1.7, label: "Сырная мануфактура" },
-    syndicate:  { base: 15000, mult: 1.8, label: "Крысиный синдикат" }
-};
-
-window.userUpgrades = {
-    multitap: 1,
-    rat_helper: 0,
-    factory: 0,
-    syndicate: 0
-};
-
-function calculateUpgradeCost(type, currentLevel) {
-    const cfg = UPGRADE_CONFIG[type];
-    if (!cfg) return 0;
+// 1. СЛУШАТЕЛЬ СОБЫТИЙ: Принимает сигналы от кликов и апгрейдов из upgrades.js
+window.addEventListener('updateQuests', (event) => {
+    const modal = document.getElementById('quests-overlay');
     
-    // Для предметов 0 уровня первая покупка идет по базовой цене
-    const power = (type !== 'multitap' && currentLevel === 0) ? 0 : currentLevel;
-    return Math.floor(cfg.base * Math.pow(cfg.mult, power));
-}
+    // Обновляем список, только если окно квестов открыто, чтобы не спамить запросами в фоне
+    if (modal && modal.style.display !== 'none' && modal.style.opacity === '1') {
+        console.log("Синхронизация квестов:", event.detail);
+        loadQuestsList(); 
+    }
+});
 
-async function openUpgrades() {
+async function openQuests() {
     if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
-    if (!document.getElementById('upgrades-overlay')) {
+    // Проверка наличия модалки в DOM
+    if (!document.getElementById('quests-overlay')) {
         try {
-            const response = await fetch('upgrades_modal.html');
-            if (!response.ok) throw new Error();
+            const response = await fetch('quests_modal.html');
+            if (!response.ok) throw new Error("Файл quests_modal.html не найден");
             const html = await response.text();
             document.body.insertAdjacentHTML('beforeend', html);
         } catch (err) {
-            console.error("Не удалось загрузить интерфейс улучшений");
+            console.error("Ошибка загрузки интерфейса квестов:", err);
             return;
         }
     }
 
-    const overlay = document.getElementById('upgrades-overlay');
-    const sheet = document.getElementById('upgrades-sheet');
+    const overlay = document.getElementById('quests-overlay');
+    const sheet = document.getElementById('quests-sheet');
     
     overlay.style.display = 'flex';
     setTimeout(() => {
         overlay.style.opacity = '1';
-        sheet.style.transform = 'translateY(0)';
+        if (sheet) sheet.style.transform = 'translateY(0)';
     }, 10);
 
-    updateAllUpgradesUI();
+    loadQuestsList();
 }
 
-function updateAllUpgradesUI() {
-    const mt = window.userUpgrades.multitap || 1;
-    updateSingleCardUI('multitap', mt, `Сила клика: +${mt}`);
-    
-    const rh = window.userUpgrades.rat_helper || 0;
-    updateSingleCardUI('rat_helper', rh, `Пассив: +${rh * 2} 🧀/сек`);
-    
-    const fc = window.userUpgrades.factory || 0;
-    updateSingleCardUI('factory', fc, `Цех: +${fc * 15} 🧀/сек`);
-    
-    const sd = window.userUpgrades.syndicate || 0;
-    updateSingleCardUI('syndicate', sd, `Синдикат: +${sd * 70} 🧀/сек`);
+function closeQuestsModal() {
+    const overlay = document.getElementById('quests-overlay');
+    const sheet = document.getElementById('quests-sheet');
+    if (!overlay) return;
+
+    overlay.style.opacity = '0';
+    if (sheet) sheet.style.transform = 'translateY(100%)';
+    setTimeout(() => { overlay.style.display = 'none'; }, 200);
 }
 
-function updateSingleCardUI(type, currentLevel, descriptionText) {
-    const costBtn = document.getElementById(`${type}-cost-btn`);
-    const textLevel = document.getElementById(`${type}-level-text`);
-    
-    if (costBtn && textLevel) {
-        const nextCost = calculateUpgradeCost(type, currentLevel);
-        textLevel.innerText = `${descriptionText} (Ур. ${currentLevel})`;
-        costBtn.innerText = `🧀 ${nextCost.toLocaleString('ru-RU')}`;
-    }
-}
-
-async function buyUpgrade(type) {
-    const pointsSpan = document.getElementById('points');
+async function loadQuestsList() {
+    const container = document.getElementById('quests-list-container');
     const currentUserId = typeof user !== 'undefined' ? (user?.user_id || user?.id) : null;
-    
-    if (!pointsSpan || !currentUserId) return;
-    
-    let currentLevel = window.userUpgrades[type] || 0;
-    const cost = calculateUpgradeCost(type, currentLevel);
-    let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
+    const activeUrl = window.BACKEND_URL;
 
-    if (currentPoints < cost) {
-        if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-        return; 
-    }
+    if (!container || !currentUserId || !activeUrl) return;
 
     try {
-        const response = await fetch(`${window.BACKEND_URL}/upgrade/${type}/${currentUserId}`, { method: 'POST' });
-        const data = await response.json();
-        
-        if (data.status === "ok") {
-            // Обновляем локальные данные
-            window.userUpgrades[type] = data.new_level;
-            pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
-            
-            // Визуальное обновление
-            updateAllUpgradesUI();
-            
-            // СИГНАЛ ДЛЯ КВЕСТОВ: уведомляем систему, что апгрейд куплен
-            window.dispatchEvent(new CustomEvent('updateQuests', { detail: { type, level: data.new_level } }));
+        const response = await fetch(`${activeUrl}/quests/${currentUserId}`);
+        const quests = await response.json();
 
-            if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-        }
+        container.innerHTML = ''; 
+
+        quests.forEach(quest => {
+            // Расчет прогресса для полоски
+            const progressPercent = Math.min(100, (quest.current_progress / quest.target) * 100);
+            
+            const questHtml = `
+                <div class="quest-card ${quest.is_completed ? 'completed' : ''}">
+                    <div class="quest-info">
+                        <div class="quest-title">${quest.title}</div>
+                        <div class="quest-desc">${quest.description}</div>
+                        <div class="quest-progress-container">
+                            <div class="quest-progress-fill" style="width: ${progressPercent}%"></div>
+                        </div>
+                        <div class="quest-status-text">${quest.current_progress} / ${quest.target}</div>
+                    </div>
+                    <button 
+                        class="claim-btn ${quest.can_claim && !quest.is_completed ? 'active' : ''}" 
+                        onclick="claimReward('${quest.id}')"
+                        ${!quest.can_claim || quest.is_completed ? 'disabled' : ''}>
+                        ${quest.is_completed ? 'Выполнено' : (quest.can_claim ? 'Забрать' : 'В процессе')}
+                    </button>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', questHtml);
+        });
     } catch (err) {
-        console.error("Ошибка покупки:", err);
+        console.error("Ошибка обновления списка квестов");
     }
 }
 
-// Интеграция с основным кликом
-if (typeof handleTap === 'function') {
-    const oldTap = handleTap;
-    handleTap = async function(e) {
-        let currentMultitap = window.userUpgrades.multitap || 1;
-        const pointsSpan = document.getElementById('points');
-        let p = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
-        
-        // Визуальный плюс
-        pointsSpan.innerText = (p + currentMultitap).toLocaleString('ru-RU');
-        
-        // Вызов оригинальной логики (отправка на сервер)
-        await oldTap(e);
-        
-        // Сигнал квестам о клике
-        window.dispatchEvent(new CustomEvent('updateQuests', { detail: { type: 'click' } }));
-    };
+async function claimReward(questId) {
+    const currentUserId = typeof user !== 'undefined' ? (user?.user_id || user?.id) : null;
+    if (!currentUserId) return;
+
+    try {
+        const response = await fetch(`${window.BACKEND_URL}/quests/claim/${questId}/${currentUserId}`, { method: 'POST' });
+        const data = await response.json();
+
+        if (data.status === "ok") {
+            if (typeof tg !== 'undefined' && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            loadQuestsList(); // Сразу обновляем список
+            if (typeof loadProfile === 'function') loadProfile(); // Обновляем общий баланс (сыр, звезды)
+        }
+    } catch (err) {
+        console.error("Ошибка при получении награды");
+    }
 }
