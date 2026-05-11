@@ -13,6 +13,7 @@
             --text-main: #ffffff;
             --text-dim: #888;
             --star-color: #5dade2;
+            --xp-color: #2ecc71; /* Цвет полоски опыта */
         }
 
         body { 
@@ -37,9 +38,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px 20px 100px 20px;
+            padding: 20px 20px 100px 20px;
             box-sizing: border-box;
-            gap: 15px;
+            gap: 10px;
         }
 
         .stats-panel {
@@ -78,37 +79,61 @@
             align-items: center;
             gap: 5px;
             box-shadow: 0 0 15px rgba(93, 173, 226, 0.2);
-            text-shadow: 0 0 10px rgba(93, 173, 226, 0.5);
         }
 
-        .level-badge {
-            background: rgba(241, 196, 15, 0.15);
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            padding: 2px 10px;
-            border-radius: 20px;
-            font-size: 11px;
+        /* НОВАЯ СИСТЕМА ОПЫТА (UI) */
+        .xp-container {
+            width: 100%;
+            margin: 10px 0;
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+        
+        .xp-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
             font-weight: bold;
-            display: inline-block;
-            margin-top: 5px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+            padding: 0 4px;
+        }
+
+        .xp-bar-bg {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .xp-bar-fill {
+            width: 0%; /* Будет меняться через JS */
+            height: 100%;
+            background: linear-gradient(90deg, var(--xp-color), #27ae60);
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+            transition: width 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .points { 
-            font-size: 56px; 
+            font-size: 48px; 
             color: var(--text-main); 
-            margin: 10px 0 5px 0; 
+            margin: 5px 0; 
             font-weight: 900;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 12px;
-            text-shadow: 0 0 30px rgba(241, 196, 15, 0.3);
+            gap: 10px;
+            text-shadow: 0 0 25px rgba(241, 196, 15, 0.2);
         }
 
         #clicker-container {
             position: relative;
-            width: 280px;
-            height: 280px;
+            width: 260px;
+            height: 260px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -120,10 +145,10 @@
             transition: transform 0.05s ease-in-out;
             -webkit-tap-highlight-color: transparent;
             z-index: 10;
-            filter: drop-shadow(0 15px 40px rgba(0,0,0,0.6));
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.6));
         }
 
-        #rat-button:active { transform: scale(0.90); }
+        #rat-button:active { transform: scale(0.92); }
 
         #click-animation-area {
             position: absolute;
@@ -136,93 +161,57 @@
         .plus-one {
             position: absolute;
             font-weight: 900;
-            font-size: 32px;
+            font-size: 28px;
             opacity: 0;
-            pointer-events: none;
-            animation: floatUp 0.7s ease-out forwards;
+            animation: floatUp 0.6s ease-out forwards;
         }
 
         @keyframes floatUp {
-            0% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(-150px) scale(1.8) rotate(15deg); opacity: 0; }
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-120px) scale(1.5); opacity: 0; }
         }
 
-        .error-msg { 
-            color: #e74c3c; 
-            font-size: 12px; 
-            min-height: 15px; 
-            margin-top: 5px; 
-            font-weight: bold; 
-            word-break: break-all;
-        }
+        .error-msg { color: #e74c3c; font-size: 11px; margin-top: 5px; font-weight: bold; min-height: 15px;}
         
         .action-buttons-row {
             display: flex;
             gap: 12px;
             width: 100%;
-            max-width: 300px;
+            max-width: 320px;
             justify-content: center;
-            margin-top: 5px;
         }
 
         .action-btn {
             background: var(--card-bg);
             border: 1px solid #333;
             color: var(--text-main);
-            padding: 12px 0;
-            border-radius: 12px;
+            padding: 14px 0;
+            border-radius: 14px;
             font-size: 12px;
             font-weight: 900;
             cursor: pointer;
-            transition: all 0.1s ease;
             flex: 1;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .action-btn:active {
-            transform: scale(0.95);
-            border-color: var(--accent-color);
-        }
-
-        .footer-hint {
-            color: #444;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
+        .action-btn:active { transform: scale(0.96); border-color: var(--accent-color); }
 
         .bottom-grid {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            width: 100%;
-            padding: 10px 20px 25px 20px;
-            background: var(--card-bg);
-            border-top: 1px solid #333;
-            box-sizing: border-box;
-            z-index: 1000;
+            position: fixed; bottom: 0; left: 0;
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 8px; width: 100%; padding: 10px 20px 25px 20px;
+            background: var(--card-bg); border-top: 1px solid #333;
+            box-sizing: border-box; z-index: 1000;
         }
 
         .nav-item {
-            background: #0f0f0f;
-            border-radius: 12px;
-            padding: 10px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 4px;
-            border: 1px solid #333;
-            cursor: pointer;
+            background: #0f0f0f; border-radius: 12px; padding: 10px 0;
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            border: 1px solid #333; cursor: pointer;
         }
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { font-size: 8px; font-weight: bold; color: var(--text-dim); }
         .nav-item.active { border-color: var(--accent-color); background: #222; }
-        .nav-item:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -230,11 +219,20 @@
     <div class="game-container">
         <div class="stats-panel">
             <div class="stats-header-row">
-                <h2 id="username">Загрузка...</h2>
+                <h2 id="username">Крыса...</h2>
                 <div class="top-stars-badge">⭐ <span id="lbl-stars">0</span></div>
             </div>
             
-            <div class="level-badge">ЛОГОВО: <span id="lbl-level">1</span> УРОВЕНЬ</div>
+            <div class="xp-container">
+                <div class="xp-info">
+                    <span>Уровень <span id="lbl-level">1</span></span>
+                    <span id="lbl-xp-text">0 / 100 XP</span>
+                </div>
+                <div class="xp-bar-bg">
+                    <div id="xp-fill" class="xp-bar-fill"></div>
+                </div>
+            </div>
+
             <div class="points">🧀 <span id="points">0</span></div>
             <div id="error-log" class="error-msg"></div>
         </div>
@@ -248,97 +246,66 @@
             <button class="action-btn" onclick="openUpgrades()">🛠️ УЛУЧШЕНИЯ</button>
             <button class="action-btn" onclick="openQuests()">🎯 КВЕСТЫ</button>
         </div>
-
-        <div class="footer-hint">Тапай без остановки!</div>
     </div>
 
     <div class="bottom-grid">
-        <div class="nav-item" onclick="goToPath('index.html')">
-            <i>🏠</i><span>ДОМ</span>
-        </div>
-        <div class="nav-item" onclick="goToPath('leaderboard.html')">
-            <i>🏆</i><span>ТОП</span>
-        </div>
-        <div class="nav-item active">
-            <i>🕹️</i><span>ИГРЫ</span>
-        </div>
-        <div class="nav-item" onclick="alert('Скоро!')">
-            <i>🛒</i><span>МАГАЗИН</span>
-        </div>
+        <div class="nav-item" onclick="goToPath('index.html')"><i>🏠</i><span>ДОМ</span></div>
+        <div class="nav-item" onclick="goToPath('leaderboard.html')"><i>🏆</i><span>ТОП</span></div>
+        <div class="nav-item active"><i>🕹️</i><span>ИГРЫ</span></div>
+        <div class="nav-item" onclick="alert('Скоро!')"><i>🛒</i><span>МАГАЗИН</span></div>
     </div>
 
     <script>
-        // АВАРИЙНЫЙ ЛОГГЕР ОШИБОК ДЛЯ МОБИЛОК
-        window.onerror = function(message, source, lineno, colno, error) {
-            const logBox = document.getElementById('error-log');
-            if (logBox) {
-                logBox.innerHTML = `⚠️ Ошибка: ${message} <br><small>Линия: ${lineno}</small>`;
-            }
-            return false;
-        };
-
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
         tg.setHeaderColor('#0f0f0f');
 
-        if (tg.BackButton) {
-            tg.BackButton.show();
-            tg.BackButton.onClick(() => {
-                goToPath('games_menu.html');
-            });
-        }
+        const BACKEND_URL = 'https://rat-guard-api.onrender.com';
+        window.BACKEND_URL = BACKEND_URL;
+        
+        const user = tg.initDataUnsafe?.user;
+        const pointsSpan = document.getElementById('points');
+        const levelSpan = document.getElementById('lbl-level');
+        const starsSpan = document.getElementById('lbl-stars');
+        const xpFill = document.getElementById('xp-fill');
+        const xpText = document.getElementById('lbl-xp-text');
+        const errorLog = document.getElementById('error-log');
+
+        if (user) document.getElementById('username').innerText = user.first_name;
 
         function goToPath(path) {
             if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
             window.location.href = path;
         }
 
-        const BACKEND_URL = 'https://rat-guard-api.onrender.com';
-        window.BACKEND_URL = BACKEND_URL; // Передаем в глобальную область window для других JS файлов
-        
-        const user = tg.initDataUnsafe?.user;
-        
-        const pointsSpan = document.getElementById('points');
-        const levelSpan = document.getElementById('lbl-level');
-        const starsSpan = document.getElementById('lbl-stars');
-        const ratBtn = document.getElementById('rat-button');
-        const errorLog = document.getElementById('error-log');
-
-        if (user) {
-            document.getElementById('username').innerText = user.first_name;
+        // ОБНОВЛЕНИЕ ИНТЕРФЕЙСА (Опыт, Уровень, Звезды)
+        function updateUI(data) {
+            if (data.points !== undefined) pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
+            if (data.level !== undefined) levelSpan.innerText = data.level;
+            if (data.stars !== undefined) starsSpan.innerText = data.stars.toLocaleString('ru-RU');
+            
+            // Расчет полоски опыта
+            if (data.xp !== undefined && data.xp_to_next_level) {
+                const percent = (data.xp / data.xp_to_next_level) * 100;
+                xpFill.style.width = percent + '%';
+                xpText.innerText = `${data.xp} / ${data.xp_to_next_level} XP`;
+            }
         }
 
         async function loadProfile() {
-            if (!user?.id) {
-                document.getElementById('username').innerText = "Тестовая Крыса";
-                return;
-            }
+            if (!user?.id) return;
             try {
-                const tgUsername = user.username || 'rat_user';
-                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${tgUsername}&t=${Date.now()}`);
-                
-                if (!response.ok) throw new Error("Ошибка сервера");
-                
+                const response = await fetch(`${BACKEND_URL}/get_profile/${user.id}?username=${user.username || 'rat'}`);
                 const data = await response.json();
-                if (data.points !== undefined) {
-                    document.getElementById('username').innerText = user.first_name;
-                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
-                    if (levelSpan) levelSpan.innerText = data.level || 1;
-                    if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
-                    
-                    if (ratBtn && data.multitap_level !== undefined) {
-                        ratBtn.setAttribute('data-multitap-level', data.multitap_level);
-                    }
-                }
+                updateUI(data);
             } catch (e) {
-                console.error(e);
-                if (errorLog) errorLog.innerText = "Логово временно недоступно";
-                document.getElementById('username').innerText = user.first_name || "Крыса";
+                errorLog.innerText = "Ошибка связи с Логовом";
             }
         }
 
         async function handleTap(e) {
+            // Мгновенный визуальный отзыв
             let currentPoints = parseInt(pointsSpan.innerText.replace(/\s/g, '')) || 0;
             pointsSpan.innerText = (currentPoints + 1).toLocaleString('ru-RU');
             
@@ -348,48 +315,30 @@
             try {
                 const res = await fetch(`${BACKEND_URL}/click/${user.id}`, { method: 'POST' });
                 const data = await res.json();
-                if (data.points !== undefined) {
-                    pointsSpan.innerText = Math.floor(data.points).toLocaleString('ru-RU');
-                    if (levelSpan) levelSpan.innerText = data.level || 1;
-                    if (starsSpan) starsSpan.innerText = (data.stars || 0).toLocaleString('ru-RU');
-                }
-            } catch (err) {
-                console.error("Sync error");
-            }
+                updateUI(data);
+            } catch (err) { console.error("Sync error"); }
         }
 
         function spawnCheese(e) {
             const area = document.getElementById('click-animation-area');
-            if (!area) return;
             const plus = document.createElement('div');
             plus.className = 'plus-one';
             plus.innerText = '🧀';
-            
             const rect = area.getBoundingClientRect();
-            const x = (e.clientX || (e.touches && e.touches[0].clientX)) ? ((e.clientX || e.touches[0].clientX) - rect.left) : (rect.width / 2);
-            const y = (e.clientY || (e.touches && e.touches[0].clientY)) ? ((e.clientY || e.touches[0].clientY) - rect.top) : (rect.height / 2);
-
-            plus.style.left = `${x - 15}px`;
-            plus.style.top = `${y - 15}px`;
-
+            const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+            plus.style.left = `${x}px`;
+            plus.style.top = `${y}px`;
             area.appendChild(plus);
-            setTimeout(() => plus.remove(), 700);
+            setTimeout(() => plus.remove(), 600);
         }
 
-        if (ratBtn) {
-            ratBtn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                handleTap(e.touches[0]);
-            });
-            
-            ratBtn.addEventListener('click', (e) => {
-                if (e.pointerType !== 'touch') handleTap(e);
-            });
-        }
+        const ratBtn = document.getElementById('rat-button');
+        ratBtn.addEventListener('touchstart', (e) => { e.preventDefault(); handleTap(e.touches[0]); });
+        ratBtn.addEventListener('click', (e) => { if (e.pointerType !== 'touch') handleTap(e); });
 
         loadProfile();
     </script>
-    
     <script src="upgrades.js"></script>
     <script src="quests.js"></script>
 </body>
